@@ -16,10 +16,16 @@ func InitRouter(db *pgxpool.Pool) *gin.Engine {
 	userRepo := repositories.NewUserRepository(db)
 	userHandler := handlers.NewUserHandler((*repositories.UserRepository)(userRepo))
 
+	movieRepo := repositories.NewMovieRepository(db)
+	movieHandler := handlers.NewMovieHandler((*repositories.MovieRepository)(movieRepo))
+
 	// API Version 1
 	v1 := router.Group("/api/v1")
 	{
 		v1.POST("/register", userHandler.Register)
+		v1.POST("/login", userHandler.Login)
+
+		v1.GET("/movies/upcoming", movieHandler.UpcomingMovies)
 	}
 
 	// Catch all route

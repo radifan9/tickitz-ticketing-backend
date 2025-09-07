@@ -10,12 +10,12 @@ import (
 
 // definisikan isi dari jwt kalian
 type Claims struct {
-	UserId int    `json:"id"`
+	UserId string `json:"id"`
 	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func NewJWTClaims(userid int, role string) *Claims {
+func NewJWTClaims(userid string, role string) *Claims {
 	return &Claims{
 		UserId: userid,
 		Role:   role,
