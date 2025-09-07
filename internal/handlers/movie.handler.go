@@ -1,9 +1,13 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/repositories"
 )
 
@@ -29,5 +33,68 @@ func (m *MovieHandler) ListUpcomingMovies(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"body":    upcomingMovies,
+	})
+}
+
+func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
+	keywordParam := ctx.Query("keywords")
+	genreParam := ctx.Query("genres")
+	offsetParam := ctx.Query("offset")
+	limitParam := ctx.Query("limit")
+
+	// Convert to []string
+	keywords := []string{}
+	if keywordParam != "" {
+		keywords = strings.Split(keywordParam, ",")
+	}
+
+	// Convert to []int
+	genres := []int{}
+	if genreParam != "" {
+		genreStrings := strings.Split(genreParam, ",")
+		for _, g := range genreStrings {
+			if id, err := strconv.Atoi(g); err == nil {
+				genres = append(genres, id)
+			}
+		}
+	}
+
+	// Convert offset & limit
+	offset, _ := strconv.Atoi(offsetParam)
+	limit, _ := strconv.Atoi(limitParam)
+
+	// Set sensible defaults
+	if offset < 0 {
+		offset = 0
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+
+	log.Println("keywords : ", keywords)
+	log.Println("genres : ", genres)
+	log.Println("offset : ", offset)
+	log.Println("limit : ", limit)
+
+	// Build filter struct
+	filter := models.MovieFilter{
+		Keywords: keywords,
+		Genres:   genres,
+		Offset:   offset,
+		Limit:    limit,
+	}
+
+	// Call repo
+	movies, err := m.mr.ListMovieFiltered(ctx, filter)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    movies,
 	})
 }

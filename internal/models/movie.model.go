@@ -12,3 +12,10 @@ type Movie struct {
 	ReleaseDate     time.Time `db:"release_date" json:"release_date"`
 	Genres          []string  `db:"genres" json:"genres"`
 }
+
+type MovieFilter struct {
+	Keywords []string `db:"keywords"`
+	Genres   []int    `db:"genres"`
+	Offset   int      `db:"offset"`
+	Limit    int      `db:"limit"`
+}
