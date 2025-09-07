@@ -11,5 +11,5 @@ func RegisterMovieRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	movieRepo := repositories.NewMovieRepository(db)
 	movieHandler := handlers.NewMovieHandler(movieRepo)
 
-	v1.GET("/movies/upcoming", movieHandler.UpcomingMovies)
+	v1.GET("/movies/upcoming", movieHandler.ListUpcomingMovies)
 }

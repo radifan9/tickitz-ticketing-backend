@@ -16,8 +16,8 @@ func NewMovieHandler(mr *repositories.MovieRepository) *MovieHandler {
 	return &MovieHandler{mr: mr}
 }
 
-func (m *MovieHandler) UpcomingMovies(ctx *gin.Context) {
-	upcomingMovies, err := m.mr.GetUpcomingMovie(ctx)
+func (m *MovieHandler) ListUpcomingMovies(ctx *gin.Context) {
+	upcomingMovies, err := m.mr.ListUpcomingMovie(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
