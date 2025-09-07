@@ -5,27 +5,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/radifan9/tickitz-ticketing-backend/internal/handlers"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
-	"github.com/radifan9/tickitz-ticketing-backend/internal/repositories"
 )
 
 func InitRouter(db *pgxpool.Pool) *gin.Engine {
 	router := gin.Default()
 
-	userRepo := repositories.NewUserRepository(db)
-	userHandler := handlers.NewUserHandler((*repositories.UserRepository)(userRepo))
-
-	movieRepo := repositories.NewMovieRepository(db)
-	movieHandler := handlers.NewMovieHandler((*repositories.MovieRepository)(movieRepo))
-
 	// API Version 1
 	v1 := router.Group("/api/v1")
 	{
-		v1.POST("/register", userHandler.Register)
-		v1.POST("/login", userHandler.Login)
-
-		v1.GET("/movies/upcoming", movieHandler.UpcomingMovies)
+		RegisterUserRoutes(v1, db)
+		RegisterMovieRoutes(v1, db)
 	}
 
 	// Catch all route
