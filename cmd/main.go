@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/joho/godotenv"
@@ -10,7 +9,7 @@ import (
 )
 
 func main() {
-	fmt.Println("--- --- Tickitz --- ---")
+	log.Println("--- --- Tickitz --- ---")
 
 	// Load environment variables
 	if err := godotenv.Load(".env"); err != nil {

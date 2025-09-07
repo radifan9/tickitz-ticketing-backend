@@ -1,0 +1,13 @@
+package models
+
+type User struct {
+	Id       string `db:"id" json:"id"`
+	Role     string `db:"role" json:"role"`
+	Email    string `db:"email" json:"email"`
+	Password string `db:"password" json:"password,omitempty"`
+}
+
+type RegisterUser struct {
+	Email    string `db:"email" json:"email"`
+	Password string `db:"password" json:"password"`
+}
