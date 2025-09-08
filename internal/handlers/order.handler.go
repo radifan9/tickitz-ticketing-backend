@@ -18,28 +18,6 @@ func NewOrderHandler(or *repositories.OrderRepository) *OrderHandler {
 	return &OrderHandler{or: or}
 }
 
-// func (o *OrderHandler) ListSchedules(ctx *gin.Context) {
-
-// 	movieID := ctx.Query("movie_id")
-// 	cityID := ctx.Query("city_id")
-// 	showTimeID := ctx.Query("show_time_id")
-
-// 	log.Println("movieId: ", movieID)
-// 	log.Println("cityId: ", cityID)
-// 	log.Println("showTimeID: ", showTimeID)
-
-// 	schedules, err := o.or.FilterSchedule(ctx, movieID, cityID, showTimeID)
-// 	if err != nil {
-// 		ctx.JSON(500, gin.H{
-// 			"success": false,
-// 			"error":   err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	ctx.JSON(200, schedules)
-// }
-
 func (o *OrderHandler) ListSchedules(ctx *gin.Context) {
 	var queryParams models.ScheduleFilter
 	if err := ctx.ShouldBindQuery(&queryParams); err != nil {
@@ -49,7 +27,7 @@ func (o *OrderHandler) ListSchedules(ctx *gin.Context) {
 		})
 	}
 
-	schedules, err := o.or.FilterSchedule(ctx, queryParams.MovieID, queryParams.CityID, queryParams.ShowTimeID, queryParams.Date)
+	schedules, err := o.or.FilterSchedule(ctx, queryParams)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"sucess": false,

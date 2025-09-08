@@ -16,12 +16,12 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 	return &OrderRepository{db: db}
 }
 
-func (o *OrderRepository) FilterSchedule(ctx context.Context, movieID, cityID, showTimeID, date string) ([]models.Schedule, error) {
+func (o *OrderRepository) FilterSchedule(ctx context.Context, queryParam models.ScheduleFilter) ([]models.Schedule, error) {
 
-	log.Println("movieID", movieID)
-	log.Println("cityID", cityID)
-	log.Println("showTimeID", showTimeID)
-	log.Println("date", date)
+	log.Println("movieID", queryParam.MovieID)
+	log.Println("cityID", queryParam.CityID)
+	log.Println("showTimeID", queryParam.ShowTimeID)
+	log.Println("date", queryParam.Date)
 
 	query := `
 			SELECT 
@@ -48,7 +48,7 @@ func (o *OrderRepository) FilterSchedule(ctx context.Context, movieID, cityID, s
 			ORDER BY s.show_time_id, s.cinema_id;
 	`
 
-	rows, err := o.db.Query(ctx, query, movieID, cityID, showTimeID, date)
+	rows, err := o.db.Query(ctx, query, queryParam.MovieID, queryParam.CityID, queryParam.ShowTimeID, queryParam.Date)
 	if err != nil {
 		return nil, err
 	}
