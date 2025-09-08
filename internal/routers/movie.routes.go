@@ -16,5 +16,7 @@ func RegisterMovieRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	v1.GET("/movies/", movieHandler.ListFilteredMovies)
 
 	// Only Admin can do this
-	v1.PATCH("/movies/:id/archive", middlewares.VerifyToken, middlewares.Access("admin"), movieHandler.GoArchiveAMovie)
+	v1.GET("/admin/movies", middlewares.VerifyToken, middlewares.Access("admin"), movieHandler.GetAllMovies)
+	v1.PATCH("/admin/movies/:id/archive", middlewares.VerifyToken, middlewares.Access("admin"), movieHandler.GoArchiveAMovie)
+
 }

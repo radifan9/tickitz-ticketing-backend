@@ -115,3 +115,20 @@ func (m *MovieHandler) GoArchiveAMovie(ctx *gin.Context) {
 		"body":    archievedMovieId,
 	})
 }
+
+// Get All Movies
+func (m *MovieHandler) GetAllMovies(ctx *gin.Context) {
+	allMovies, err := m.mr.AllMovies(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"body":    allMovies,
+	})
+}

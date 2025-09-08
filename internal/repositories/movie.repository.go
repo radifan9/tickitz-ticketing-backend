@@ -189,3 +189,54 @@ func (m *MovieRepository) ArchiveMovie(ctx context.Context, movieId string) (int
 
 	return updatedMovieId, nil
 }
+
+func (m *MovieRepository) AllMovies(ctx context.Context) ([]models.Movie, error) {
+	// Query for getting movies list (admin)
+	query := `
+SELECT
+  m.id,
+  m.title,
+  m.poster_img,
+  m.release_date,
+  ARRAY_AGG(DISTINCT g.name ORDER BY g.name) AS genres,
+  m.duration_minutes
+FROM
+  movies m
+  JOIN movie_genres mg ON m.id = mg.movie_id
+  JOIN genres g ON mg.genre_id = g.id
+GROUP BY
+  m.id,
+  m.title,
+  m.poster_img,
+  m.release_date,
+  m.duration_minutes
+ORDER BY m.release_date DESC
+LIMIT 10 OFFSET 0;`
+	rows, err := m.db.Query(ctx, query)
+	if err != nil {
+		log.Println("internal server error : ", err.Error())
+		return []models.Movie{}, err
+	}
+	defer rows.Close()
+
+	var movies []models.Movie
+
+	// Read rows/records
+	for rows.Next() {
+		var movie models.Movie
+		if err := rows.Scan(
+			&movie.ID,
+			&movie.Title,
+			&movie.PosterImg,
+			&movie.ReleaseDate,
+			&movie.Genres,
+			&movie.DurationMinutes,
+		); err != nil {
+			log.Println("scan error, ", err.Error())
+			return []models.Movie{}, err
+		}
+		movies = append(movies, movie)
+	}
+
+	return movies, nil
+}
