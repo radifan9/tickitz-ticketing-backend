@@ -16,6 +16,7 @@ func InitRouter(db *pgxpool.Pool) *gin.Engine {
 	{
 		RegisterUserRoutes(v1, db)
 		RegisterMovieRoutes(v1, db)
+		RegisterOrderRoutes(v1, db)
 	}
 
 	// Catch all route

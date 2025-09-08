@@ -170,3 +170,22 @@ func (m *MovieRepository) ListMovieFiltered(
 
 	return movies, nil
 }
+
+// Archive a movie (delete)
+func (m *MovieRepository) ArchiveMovie(ctx context.Context, movieId string) (int, error) {
+
+	// Query
+	query := `UPDATE movies
+	SET is_archived = TRUE,
+			updated_at = CURRENT_TIMESTAMP
+	WHERE id = $1 returning id
+	`
+
+	var updatedMovieId int
+	err := m.db.QueryRow(ctx, query, movieId).Scan(&updatedMovieId)
+	if err != nil {
+		return 0, err
+	}
+
+	return updatedMovieId, nil
+}

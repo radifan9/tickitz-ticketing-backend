@@ -95,6 +95,23 @@ func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data":    movies,
+		"body":    movies,
+	})
+}
+
+func (m *MovieHandler) GoArchiveAMovie(ctx *gin.Context) {
+	movieId := ctx.Param("id")
+
+	archievedMovieId, err := m.mr.ArchiveMovie(ctx, movieId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"body":    0,
+		})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"body":    archievedMovieId,
 	})
 }
