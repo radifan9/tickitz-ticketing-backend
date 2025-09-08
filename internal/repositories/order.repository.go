@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
@@ -15,7 +16,13 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 	return &OrderRepository{db: db}
 }
 
-func (o *OrderRepository) FilterSchedule(ctx context.Context, movieID, cityID, showTimeID string) ([]models.Schedule, error) {
+func (o *OrderRepository) FilterSchedule(ctx context.Context, movieID, cityID, showTimeID, date string) ([]models.Schedule, error) {
+
+	log.Println("movieID", movieID)
+	log.Println("cityID", cityID)
+	log.Println("showTimeID", showTimeID)
+	log.Println("date", date)
+
 	query := `
 			SELECT 
 				s.id,
@@ -34,14 +41,14 @@ func (o *OrderRepository) FilterSchedule(ctx context.Context, movieID, cityID, s
 			JOIN cities ci ON s.city_id = ci.id
 			JOIN show_times st ON s.show_time_id = st.id
 			JOIN cinemas c ON s.cinema_id = c.id
-			WHERE s.show_date = CURRENT_DATE + INTERVAL '1 day'
-				AND ($1::int IS NULL OR s.movie_id = $1)
-				AND ($2::int IS NULL OR s.city_id = $2)
-				AND ($3::int IS NULL OR s.show_time_id = $3)
+			WHERE s.show_date = COALESCE(NULLIF($4, '')::date, CURRENT_DATE + 1)
+				AND (NULLIF($1, '')::int IS NULL OR s.movie_id = NULLIF($1, '')::int)
+				AND (NULLIF($2, '')::int IS NULL OR s.city_id = NULLIF($2, '')::int)
+				AND (NULLIF($3, '')::int IS NULL OR s.show_time_id = NULLIF($3, '')::int)
 			ORDER BY s.show_time_id, s.cinema_id;
 	`
 
-	rows, err := o.db.Query(ctx, query, movieID, cityID, showTimeID)
+	rows, err := o.db.Query(ctx, query, movieID, cityID, showTimeID, date)
 	if err != nil {
 		return nil, err
 	}

@@ -14,6 +14,13 @@ type Schedule struct {
 	ShowDate   string `db:"show_date" json:"show_date"`
 }
 
+type ScheduleFilter struct {
+	MovieID    string `form:"movie_id"`
+	CityID     string `form:"city_id"`
+	ShowTimeID string `form:"show_time_id"`
+	Date       string `form:"show_date"`
+}
+
 type Transaction struct {
 	ID           string `json:"id"`
 	UserID       string `json:"user_id"`

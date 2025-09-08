@@ -5,11 +5,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/radifan9/tickitz-ticketing-backend/internal/middlewares"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
 )
 
 func InitRouter(db *pgxpool.Pool) *gin.Engine {
 	router := gin.Default()
+
+	// tambahkan cors
+	router.Use(middlewares.CORSMiddleware)
 
 	// API Version 1
 	v1 := router.Group("/api/v1")

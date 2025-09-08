@@ -13,4 +13,5 @@ func RegisterUserRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 
 	v1.POST("/register", userHandler.Register)
 	v1.POST("/login", userHandler.Login)
+	v1.GET("/profile/:id", userHandler.GetProfileByUserID)
 }

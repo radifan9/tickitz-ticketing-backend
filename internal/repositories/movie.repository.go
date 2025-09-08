@@ -41,6 +41,7 @@ func (m *MovieRepository) ListUpcomingMovie(ctx context.Context) ([]models.Movie
 		JOIN genres g ON mg.genre_id = g.id
 	WHERE
 		m.release_date > CURRENT_DATE
+		AND m.is_archived = FALSE
 	GROUP BY
 		m.id,
 		m.title,
@@ -92,9 +93,9 @@ func (m *MovieRepository) ListMovieFiltered(
 		JOIN genres g ON mg.genre_id = g.id
 	`
 
-	conds := []string{}     // accumulates SQL condition snippets
-	args := []interface{}{} // accumulates parameter values
-	argPos := 1             // track the next $n (start at 1)
+	conds := []string{"m.is_archived = FALSE"} // accumulates SQL condition snippets (default: exclude archived)
+	args := []interface{}{}                    // accumulates parameter values
+	argPos := 1                                // track the next $n (start at 1)
 
 	// Use reflection to inspect struct fields
 	v := reflect.ValueOf(filter)

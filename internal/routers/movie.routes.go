@@ -12,11 +12,24 @@ func RegisterMovieRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	movieRepo := repositories.NewMovieRepository(db)
 	movieHandler := handlers.NewMovieHandler(movieRepo)
 
-	v1.GET("/movies/upcoming", movieHandler.ListUpcomingMovies)
-	v1.GET("/movies/", movieHandler.ListFilteredMovies)
+	movies := v1.Group("/movies")
+	{
+		movies.GET("/upcoming", movieHandler.ListUpcomingMovies)
+		movies.GET("/", movieHandler.ListFilteredMovies)
+	}
 
 	// Only Admin can do this
-	v1.GET("/admin/movies", middlewares.VerifyToken, middlewares.Access("admin"), movieHandler.GetAllMovies)
-	v1.PATCH("/admin/movies/:id/archive", middlewares.VerifyToken, middlewares.Access("admin"), movieHandler.GoArchiveAMovie)
+	admin := v1.Group("/admin")
+	{
+		admin.GET("/movies",
+			middlewares.VerifyToken,
+			middlewares.Access("admin"),
+			movieHandler.GetAllMovies)
+
+		admin.DELETE("/movies/:id/archive",
+			middlewares.VerifyToken,
+			middlewares.Access("admin"),
+			movieHandler.GoArchiveAMovie)
+	}
 
 }

@@ -42,7 +42,9 @@ func (u *UserHandler) Register(ctx *gin.Context) {
 	// Save user
 	newUser, err := u.ur.CreateUser(ctx, user.Email, hashedPassword)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("error : ", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "failed to register"})
 		return
 	}
 
@@ -124,5 +126,32 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"token":   jwtToken,
+	})
+}
+
+// GetProfileByUserID handles GET /users/:user_id/profile
+// It fetches the user's profile from the repository and returns it as JSON
+func (u *UserHandler) GetProfileByUserID(ctx *gin.Context) {
+	userID := ctx.Param("id")
+	if userID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "user_id is required",
+		})
+		return
+	}
+
+	profile, err := u.ur.GetProfileByUserID(ctx, userID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"error":   "profile not found",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    profile,
 	})
 }

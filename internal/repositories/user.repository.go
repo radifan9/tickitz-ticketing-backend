@@ -48,3 +48,31 @@ func (u *UserRepository) GetPasswordFromID(ctx context.Context, id string) (mode
 	}
 	return user, nil
 }
+
+// GetProfileByUserID fetches a user's profile from user_profiles by user_id
+func (u *UserRepository) GetProfileByUserID(ctx context.Context, userID string) (models.UserProfile, error) {
+	query := `
+			SELECT 
+					user_id,
+					COALESCE(first_name, ''),
+					COALESCE(last_name, ''),
+					COALESCE(img, ''),
+					COALESCE(phone_number, ''),
+					COALESCE(points, 0)
+			FROM user_profiles
+			WHERE user_id = $1
+	`
+
+	var p models.UserProfile
+	if err := u.db.QueryRow(ctx, query, userID).Scan(
+		&p.UserID,
+		&p.FirstName,
+		&p.LastName,
+		&p.Img,
+		&p.PhoneNumber,
+		&p.Points,
+	); err != nil {
+		return models.UserProfile{}, fmt.Errorf("profile not found or error fetching profile: %w", err)
+	}
+	return p, nil
+}
