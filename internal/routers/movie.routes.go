@@ -16,6 +16,7 @@ func RegisterMovieRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	{
 		movies.GET("/upcoming", movieHandler.ListUpcomingMovies)
 		movies.GET("/", movieHandler.ListFilteredMovies)
+		movies.GET("/:id", movieHandler.GetMovieDetails)
 	}
 
 	// Only Admin can do this

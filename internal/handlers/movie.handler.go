@@ -118,6 +118,28 @@ func (m *MovieHandler) ArchiveMovieByID(ctx *gin.Context) {
 	})
 }
 
+// --- Get Movie Details
+func (m *MovieHandler) GetMovieDetails(ctx *gin.Context) {
+	movieID := ctx.Param("id")
+
+	movie, err := m.mr.GetMovieDetails(ctx, movieID)
+	if err != nil {
+		log.Println("error : ", err)
+		utils.HandleResponse(ctx, http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Status:  http.StatusInternalServerError,
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    movie,
+	})
+}
+
 // (Admin) List All Movies
 func (m *MovieHandler) ListAllMovies(ctx *gin.Context) {
 	allMovies, err := m.mr.ListAllMovies(ctx)

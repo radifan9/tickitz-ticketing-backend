@@ -172,6 +172,72 @@ func (m *MovieRepository) ListMovieFiltered(
 	return movies, nil
 }
 
+// Movie Detail
+func (m *MovieRepository) GetMovieDetails(ctx context.Context, movieId string) (models.Movie, error) {
+	query := `
+	select
+		m.id,
+		m.title,
+		m.synopsis,
+		m.poster_img,
+		m.backdrop_img,
+		m.duration_minutes,
+		m.release_date,
+		array_agg(
+			distinct g.name
+			order by
+				g.name
+		) as genres,
+
+		-- Director
+		d.name as director,
+
+		-- Casts
+		array_agg(
+			distinct a.name
+			order by
+				a.name
+		) as cast
+	from
+		movies m
+		join movie_genres mg on m.id = mg.movie_id
+		join genres g on g.id = mg.genre_id
+		join people d on d.id = m.director_id
+		left join movie_actors ma on ma.movie_id = m.id
+		left join people a on a.id = ma.actor_id
+	where
+		m.id = $1
+	group by
+		m.id,
+		m.title,
+		m.synopsis,
+		m.poster_img,
+		m.backdrop_img,
+		m.duration_minutes,
+		m.release_date,
+		d.name;
+	`
+
+	var movieDetails models.Movie
+	err := m.db.QueryRow(ctx, query, movieId).Scan(
+		&movieDetails.ID,
+		&movieDetails.Title,
+		&movieDetails.Synopsis,
+		&movieDetails.PosterImg,
+		&movieDetails.BackdropImg,
+		&movieDetails.DurationMinutes,
+		&movieDetails.ReleaseDate,
+		&movieDetails.Genres,
+		&movieDetails.Director,
+		&movieDetails.Cast,
+	)
+	if err != nil {
+		return models.Movie{}, err
+	}
+
+	return movieDetails, nil
+}
+
 // Archive a movie (delete)
 func (m *MovieRepository) ArchiveMovieByID(ctx context.Context, movieId string) (models.ArchiveMovieRespond, error) {
 
