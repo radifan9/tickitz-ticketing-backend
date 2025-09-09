@@ -24,12 +24,12 @@ func RegisterMovieRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 		admin.GET("/movies",
 			middlewares.VerifyToken,
 			middlewares.Access("admin"),
-			movieHandler.GetAllMovies)
+			movieHandler.ListAllMovies)
 
 		admin.DELETE("/movies/:id/archive",
 			middlewares.VerifyToken,
 			middlewares.Access("admin"),
-			movieHandler.GoArchiveAMovie)
+			movieHandler.ArchiveMovieByID)
 	}
 
 }

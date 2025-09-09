@@ -19,3 +19,9 @@ type MovieFilter struct {
 	Offset   int      `db:"offset"`
 	Limit    int      `db:"limit"`
 }
+
+type ArchiveMovieRespond struct {
+	ID          int       `json:"id"`
+	Title       string    `json:"title"`
+	Archived_at time.Time `json:"archived_at"`
+}

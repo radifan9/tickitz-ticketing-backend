@@ -1,0 +1,53 @@
+basePath: /
+definitions:
+  models.RegisterUser:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: Str0ngP@ss!
+        type: string
+    type: object
+info:
+  contact: {}
+  description: RESTful API created using gin gonic
+  title: Ticktiz Ticketing
+  version: "1.0"
+paths:
+  /api/v1/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a user account with email and password
+      parameters:
+      - description: Register payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.RegisterUser'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created user id and email
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+swagger: "2.0"

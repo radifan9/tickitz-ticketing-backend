@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/repositories"
+	"github.com/radifan9/tickitz-ticketing-backend/internal/utils"
 )
 
 // mr : movie repository
@@ -99,10 +100,10 @@ func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 	})
 }
 
-func (m *MovieHandler) GoArchiveAMovie(ctx *gin.Context) {
+func (m *MovieHandler) ArchiveMovieByID(ctx *gin.Context) {
 	movieId := ctx.Param("id")
 
-	archievedMovieId, err := m.mr.ArchiveMovie(ctx, movieId)
+	archievedMovieId, err := m.mr.ArchiveMovieByID(ctx, movieId)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -110,25 +111,28 @@ func (m *MovieHandler) GoArchiveAMovie(ctx *gin.Context) {
 		})
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"body":    archievedMovieId,
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    archievedMovieId,
 	})
 }
 
-// Get All Movies
-func (m *MovieHandler) GetAllMovies(ctx *gin.Context) {
-	allMovies, err := m.mr.AllMovies(ctx)
+// (Admin) List All Movies
+func (m *MovieHandler) ListAllMovies(ctx *gin.Context) {
+	allMovies, err := m.mr.ListAllMovies(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   err.Error(),
+		utils.HandleResponse(ctx, http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Status:  http.StatusInternalServerError,
+			Error:   err.Error(),
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"body":    allMovies,
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    allMovies,
 	})
 }

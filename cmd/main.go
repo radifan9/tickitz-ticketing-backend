@@ -8,6 +8,10 @@ import (
 	"github.com/radifan9/tickitz-ticketing-backend/internal/routers"
 )
 
+// @title 			Ticktiz Ticketing
+// @version 		1.0
+// @description	RESTful API created using gin gonic
+// @basePath		/
 func main() {
 	log.Println("--- --- Tickitz --- ---")
 

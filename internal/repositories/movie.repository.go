@@ -41,7 +41,6 @@ func (m *MovieRepository) ListUpcomingMovie(ctx context.Context) ([]models.Movie
 		JOIN genres g ON mg.genre_id = g.id
 	WHERE
 		m.release_date > CURRENT_DATE
-		AND m.is_archived = FALSE
 	GROUP BY
 		m.id,
 		m.title,
@@ -49,6 +48,7 @@ func (m *MovieRepository) ListUpcomingMovie(ctx context.Context) ([]models.Movie
 		m.release_date
 	ORDER BY
 		m.release_date ASC`
+
 	rows, err := m.db.Query(ctx, query)
 	if err != nil {
 		log.Println("internal server error : ", err.Error())
@@ -93,9 +93,9 @@ func (m *MovieRepository) ListMovieFiltered(
 		JOIN genres g ON mg.genre_id = g.id
 	`
 
-	conds := []string{"m.is_archived = FALSE"} // accumulates SQL condition snippets (default: exclude archived)
-	args := []interface{}{}                    // accumulates parameter values
-	argPos := 1                                // track the next $n (start at 1)
+	conds := []string{}     // accumulates SQL condition snippets (default: exclude archived)
+	args := []interface{}{} // accumulates parameter values
+	argPos := 1             // track the next $n (start at 1)
 
 	// Use reflection to inspect struct fields
 	v := reflect.ValueOf(filter)
@@ -173,25 +173,27 @@ func (m *MovieRepository) ListMovieFiltered(
 }
 
 // Archive a movie (delete)
-func (m *MovieRepository) ArchiveMovie(ctx context.Context, movieId string) (int, error) {
+func (m *MovieRepository) ArchiveMovieByID(ctx context.Context, movieId string) (models.ArchiveMovieRespond, error) {
 
 	// Query
-	query := `UPDATE movies
-	SET is_archived = TRUE,
-			updated_at = CURRENT_TIMESTAMP
-	WHERE id = $1 returning id
+	query := `
+	UPDATE movies
+	SET 
+		archived_at = CURRENT_TIMESTAMP,
+		updated_at = CURRENT_TIMESTAMP
+	WHERE id = $1 returning id, title, archived_at
 	`
 
-	var updatedMovieId int
-	err := m.db.QueryRow(ctx, query, movieId).Scan(&updatedMovieId)
+	var archivedMovie models.ArchiveMovieRespond
+	err := m.db.QueryRow(ctx, query, movieId).Scan(&archivedMovie.ID, &archivedMovie.Title, &archivedMovie.Archived_at)
 	if err != nil {
-		return 0, err
+		return models.ArchiveMovieRespond{}, err
 	}
 
-	return updatedMovieId, nil
+	return archivedMovie, nil
 }
 
-func (m *MovieRepository) AllMovies(ctx context.Context) ([]models.Movie, error) {
+func (m *MovieRepository) ListAllMovies(ctx context.Context) ([]models.Movie, error) {
 	// Query for getting movies list (admin)
 	query := `
 SELECT

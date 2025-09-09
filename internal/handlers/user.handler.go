@@ -21,10 +21,24 @@ func NewUserHandler(ur *repositories.UserRepository) *UserHandler {
 	return &UserHandler{ur: ur}
 }
 
+// Register
+// @Summary      Register a new user
+// @Description  Create a user account with email and password
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      models.RegisterUser  true  "Register payload"
+// @Success      201      {object}  map[string]interface{}  "Created user id and email"
+// @Failure      400      {object}  map[string]string      "Bad request"
+// @Failure      500      {object}  map[string]string      "Internal server error"
+// @Router       /api/v1/register [post]
 func (u *UserHandler) Register(ctx *gin.Context) {
 	var user models.RegisterUser
 	if err := ctx.ShouldBind(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
 		return
 	}
 
@@ -39,7 +53,7 @@ func (u *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	// Save user
+	// @Summary 	User Login
 	newUser, err := u.ur.CreateUser(ctx, user.Email, hashedPassword)
 	if err != nil {
 		log.Println("error : ", err)
