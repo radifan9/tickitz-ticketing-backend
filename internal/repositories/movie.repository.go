@@ -22,7 +22,7 @@ func NewMovieRepository(db *pgxpool.Pool) *MovieRepository {
 	return &MovieRepository{db: db}
 }
 
-func (m *MovieRepository) ListUpcomingMovie(ctx context.Context) ([]models.Movie, error) {
+func (m *MovieRepository) ListUpcomingMovies(ctx context.Context) ([]models.Movie, error) {
 	// Query for getting upcoming (not release yet) movies
 	query := `
 	SELECT
@@ -58,6 +58,74 @@ func (m *MovieRepository) ListUpcomingMovie(ctx context.Context) ([]models.Movie
 
 	var movies []models.Movie
 
+	// Membaca rows/record
+	for rows.Next() {
+		var movie models.Movie
+		if err := rows.Scan(&movie.ID, &movie.Title, &movie.PosterImg, &movie.ReleaseDate, &movie.Genres); err != nil {
+			log.Println("scan error, ", err.Error())
+			return []models.Movie{}, err
+		}
+		movies = append(movies, movie)
+	}
+
+	return movies, nil
+}
+
+// --- Get Popular Movie
+func (m *MovieRepository) ListPopularMovies(ctx context.Context) ([]models.Movie, error) {
+	query := `
+	with get_popular_movie_id as (
+		select
+			s.movie_id
+		from
+			transactions t
+			join schedules s on t.schedule_id = s.id
+		where
+			-- Make sure the movie is still on the show_date schedule
+			s.show_date >= current_date
+		group by
+			movie_id
+		order by
+			count(t.id) desc
+	)
+		
+	SELECT
+		m.id,
+		m.title,
+		m.poster_img,
+		m.release_date,
+		ARRAY_AGG(
+			g.name
+			ORDER BY
+				g.name
+		) AS genres
+	FROM
+		movies m
+		JOIN movie_genres mg ON m.id = mg.movie_id
+		JOIN genres g ON mg.genre_id = g.id
+	WHERE
+		m.id in (
+			select
+				movie_id
+			from
+				get_popular_movie_id
+		)
+	GROUP BY
+		m.id,
+		m.title,
+		m.poster_img,
+		m.release_date
+	ORDER BY
+		m.release_date ASC
+	`
+
+	rows, err := m.db.Query(ctx, query)
+	if err != nil {
+		return []models.Movie{}, err
+	}
+	defer rows.Close()
+
+	var movies []models.Movie
 	// Membaca rows/record
 	for rows.Next() {
 		var movie models.Movie
@@ -262,25 +330,25 @@ func (m *MovieRepository) ArchiveMovieByID(ctx context.Context, movieId string) 
 func (m *MovieRepository) ListAllMovies(ctx context.Context) ([]models.Movie, error) {
 	// Query for getting movies list (admin)
 	query := `
-SELECT
-  m.id,
-  m.title,
-  m.poster_img,
-  m.release_date,
-  ARRAY_AGG(DISTINCT g.name ORDER BY g.name) AS genres,
-  m.duration_minutes
-FROM
-  movies m
-  JOIN movie_genres mg ON m.id = mg.movie_id
-  JOIN genres g ON mg.genre_id = g.id
-GROUP BY
-  m.id,
-  m.title,
-  m.poster_img,
-  m.release_date,
-  m.duration_minutes
-ORDER BY m.release_date DESC
-LIMIT 10 OFFSET 0;`
+	SELECT
+		m.id,
+		m.title,
+		m.poster_img,
+		m.release_date,
+		ARRAY_AGG(DISTINCT g.name ORDER BY g.name) AS genres,
+		m.duration_minutes
+	FROM
+		movies m
+		JOIN movie_genres mg ON m.id = mg.movie_id
+		JOIN genres g ON mg.genre_id = g.id
+	GROUP BY
+		m.id,
+		m.title,
+		m.poster_img,
+		m.release_date,
+		m.duration_minutes
+	ORDER BY m.release_date DESC
+	LIMIT 10 OFFSET 0;`
 	rows, err := m.db.Query(ctx, query)
 	if err != nil {
 		log.Println("internal server error : ", err.Error())

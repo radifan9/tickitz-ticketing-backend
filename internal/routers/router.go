@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/middlewares"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
+	"github.com/radifan9/tickitz-ticketing-backend/internal/utils"
 
 	docs "github.com/radifan9/tickitz-ticketing-backend/docs"
 	swaggerfiles "github.com/swaggo/files"
@@ -29,13 +30,15 @@ func InitRouter(db *pgxpool.Pool) *gin.Engine {
 		RegisterUserRoutes(v1, db)
 		RegisterMovieRoutes(v1, db)
 		RegisterOrderRoutes(v1, db)
+		RegisterAdminRoutes(v1, db)
 	}
 
 	// Catch all route
 	router.NoRoute(func(ctx *gin.Context) {
-		ctx.JSON(http.StatusNotFound, models.Response{
-			Message: "Not Found",
-			Status:  "Route does not exist",
+		utils.HandleResponse(ctx, http.StatusNotFound, models.ErrorResponse{
+			Success: false,
+			Status:  http.StatusNotFound,
+			Error:   "Route does not exist",
 		})
 	})
 

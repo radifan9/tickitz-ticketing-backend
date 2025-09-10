@@ -22,18 +22,30 @@ func NewMovieHandler(mr *repositories.MovieRepository) *MovieHandler {
 }
 
 func (m *MovieHandler) ListUpcomingMovies(ctx *gin.Context) {
-	upcomingMovies, err := m.mr.ListUpcomingMovie(ctx)
+	upcomingMovies, err := m.mr.ListUpcomingMovies(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   err.Error(),
-		})
+		utils.HandleError(ctx, http.StatusOK, err.Error(), "failed to list upcoming movies")
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"body":    upcomingMovies,
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    upcomingMovies,
+	})
+}
+
+func (m *MovieHandler) ListPopularMovies(ctx *gin.Context) {
+	popularMovies, err := m.mr.ListPopularMovies(ctx)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, err.Error(), "failed to list popular movies")
+		return
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    popularMovies,
 	})
 }
 

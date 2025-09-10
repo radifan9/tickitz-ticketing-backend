@@ -43,10 +43,11 @@ func (o *OrderHandler) ListSchedules(ctx *gin.Context) {
 	})
 }
 
+// --- Method used in Payment Page, when user clicked "Check Payment"
 func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
 	var body models.Transaction
 	if err := ctx.ShouldBind(&body); err != nil {
-		log.Println("Internal server error.\nCause: ", err.Error())
+		log.Println("error : ", err.Error())
 		utils.HandleResponse(ctx, http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Status:  http.StatusInternalServerError,
@@ -54,15 +55,10 @@ func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
 		})
 		return
 	}
-
-	log.Println(body.UserID)
-	log.Println(body.PaymentID)
-	log.Println(body.TotalPayment)
-	log.Println(body.Seats)
 
 	transaction, err := o.or.AddNewTransactionsAndSeatCodes(ctx, body)
 	if err != nil {
-		log.Println("Error : ", err.Error())
+		log.Println("error : ", err.Error())
 		utils.HandleResponse(ctx, http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Status:  http.StatusInternalServerError,
@@ -71,8 +67,9 @@ func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"success":     true,
-		"transaction": transaction,
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    transaction,
 	})
 }

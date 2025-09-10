@@ -11,8 +11,8 @@ type Movie struct {
 	DurationMinutes int       `db:"duration_minutes" json:"duration_minutes,omitempty"`
 	ReleaseDate     time.Time `db:"release_date" json:"release_date"`
 	Genres          []string  `db:"genres" json:"genres"`
-	Director        string    `db:"director" json:"director"`
-	Cast            []string  `db:"cast" json:"cast"`
+	Director        string    `db:"director" json:"director,omitempty"`
+	Cast            []string  `db:"cast" json:"cast,omitempty"`
 }
 
 type MovieFilter struct {

@@ -1,14 +1,9 @@
 package models
 
-type Response struct {
-	Message string
-	Status  string
-}
-
 type SuccessResponse struct {
 	Success bool `json:"success" example:"true"`
 	Status  int  `json:"status" example:"200"`
-	Data    any
+	Data    any  `json:"data"`
 }
 
 type ErrorResponse struct {
