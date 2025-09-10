@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Schedule struct {
 	ID         int    `db:"id" json:"id"`
 	MovieID    int    `db:"movie_id" json:"movie_id"`
@@ -22,13 +24,22 @@ type ScheduleFilter struct {
 }
 
 type Transaction struct {
-	ID           string `json:"id"`
-	UserID       string `json:"user_id"`
-	PaymentID    int    `json:"payment_id"`
-	TotalPayment int    `json:"total_payment"`
-	IsPaid       bool   `json:"is_paid"`
-	FullName     string `json:"full_name"`
-	Email        string `json:"email"`
-	PhoneNumber  string `json:"phone_number"`
-	ScheduleID   int    `json:"schedule_id"`
+	ID           string    `json:"id"`
+	UserID       string    `json:"user_id"`
+	PaymentID    int       `json:"payment_id"`
+	TotalPayment int       `json:"total_payment"`
+	FullName     string    `json:"full_name"`
+	Email        string    `json:"email"`
+	PhoneNumber  string    `json:"phone_number"`
+	PaidAt       time.Time `json:"paid_at"`
+	ScannedAt    time.Time `json:"scanned_at"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	ScheduleID   int       `json:"schedule_id"`
+	Seats        []string  `json:"seats"`
+}
+
+type SeatCodes struct {
+	ID        int
+	seat_code string
 }

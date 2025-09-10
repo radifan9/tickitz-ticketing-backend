@@ -2,7 +2,9 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
@@ -71,39 +73,89 @@ func (o *OrderRepository) FilterSchedule(ctx context.Context, queryParam models.
 	return schedules, nil
 }
 
-func (o *OrderRepository) AddNewTransactions(ctx context.Context, t models.Transaction) (models.Transaction, error) {
-	// Assume user book and ticket and paid directly
-	query := `
-	insert into transactions
-	(user_id, payment_id, paid_at, total_payment, is_paid, full_name, email, phone_number, schedule_id) values (
-		$1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6, $7, $8
-	) returning id::text, user_id::text
-	`
-
-	var newTransaction models.Transaction
-	err := o.db.QueryRow(ctx, query,
-		t.UserID,
-		t.PaymentID,
-		t.TotalPayment,
-		t.IsPaid,
-		t.FullName,
-		t.Email,
-		t.PhoneNumber,
-		t.ScheduleID,
-	).Scan(&newTransaction.ID, &newTransaction.UserID)
+// --- Method used in Payment Page, when user clicked "Check Payment"
+func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t models.Transaction) (models.Transaction, error) {
+	// --- --- Build Query for adding seats
+	placeholders := make([]string, len(t.Seats))
+	args := make([]interface{}, len(t.Seats))
+	for i, s := range t.Seats {
+		placeholders[i] = fmt.Sprintf("($%d)", i+1)
+		args[i] = s
+	}
+	insertSeatsSQL := "insert into seat_codes (seat_code) values " + strings.Join(placeholders, ",") + " returning id"
+	rows, err := o.db.Query(ctx, insertSeatsSQL, args...)
 	if err != nil {
 		return models.Transaction{}, err
 	}
 
-	// populate the rest from input
-	newTransaction.PaymentID = t.PaymentID
-	newTransaction.TotalPayment = t.TotalPayment
-	newTransaction.FullName = t.FullName
-	newTransaction.Email = t.Email
-	newTransaction.PhoneNumber = t.PhoneNumber
-	newTransaction.ScheduleID = t.ScheduleID
-	newTransaction.IsPaid = t.IsPaid
+	var insertedSeatIDs []int
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return models.Transaction{}, err
+		}
+		insertedSeatIDs = append(insertedSeatIDs, id)
+	}
 
-	// If there's no error
-	return newTransaction, nil
+	log.Println(insertedSeatIDs)
+
+	// --- --- Build Query for add new transaction (Assuming user paid directly)
+	query := `
+		insert into
+	  transactions (
+	    user_id,
+	    payment_id,
+	    total_payment,
+	    full_name,
+	    email,
+	    phone_number,
+	    paid_at,
+	    schedule_id
+	  )
+	values
+	  ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, $7) 
+		returning id:: text, user_id:: text, schedule_id
+		`
+
+	var newT models.Transaction
+	err2 := o.db.QueryRow(ctx, query,
+		t.UserID,
+		t.PaymentID,
+		t.TotalPayment,
+		t.FullName,
+		t.Email,
+		t.PhoneNumber,
+		t.ScheduleID,
+	).Scan(
+		&newT.ID,
+		&newT.UserID,
+		&newT.ScheduleID)
+	if err2 != nil {
+		return models.Transaction{}, err2
+	}
+
+	// Populate the rest of data from input (not from returning)
+	newT.PaymentID = t.PaymentID
+	newT.TotalPayment = t.TotalPayment
+	newT.FullName = t.FullName
+	newT.Email = t.Email
+	newT.PhoneNumber = t.PhoneNumber
+	newT.ScheduleID = t.ScheduleID
+	newT.Seats = t.Seats
+
+	// --- --- Build Query for adding seat_code IDs to transactions_seats table (assoc table)
+	placeholders3 := make([]string, len(insertedSeatIDs))
+	args3 := make([]interface{}, len(insertedSeatIDs))
+	for i, sID := range insertedSeatIDs {
+		placeholders3[i] = fmt.Sprintf("('%s', $%d)", newT.ID, i+1)
+		args3[i] = sID
+	}
+	insertTSQuery := "insert into transactions_seats (transactions_id, seats_id) values " + strings.Join(placeholders3, ",")
+
+	_, err3 := o.db.Query(ctx, insertTSQuery, args3...)
+	if err3 != nil {
+		return models.Transaction{}, err3
+	}
+
+	return newT, nil
 }
