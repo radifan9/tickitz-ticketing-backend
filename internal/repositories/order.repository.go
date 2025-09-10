@@ -19,7 +19,6 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 }
 
 func (o *OrderRepository) FilterSchedule(ctx context.Context, queryParam models.ScheduleFilter) ([]models.Schedule, error) {
-
 	query := `
 			SELECT 
 				s.id,
@@ -66,6 +65,42 @@ func (o *OrderRepository) FilterSchedule(ctx context.Context, queryParam models.
 		schedules = append(schedules, s)
 	}
 	return schedules, nil
+}
+
+// --- Method used in Choosing Seats
+// In here user already choose schedule
+// Logika
+// Cari transactions dengan schedule ID yang dimasukkan, yang sudah dibayar
+// --> Cari transactions_seats yang melekat pada transaction tersebut
+// --> Cari seat_codes yang melekat pada transaksi tersebut
+func (o *OrderRepository) GetSoldSeatsByScheduleID(ctx context.Context, scheduleID string) ([]string, error) {
+	query := `
+	WITH get_paid_transaction_id_by_schedule AS (
+			SELECT id AS transaction_id
+			FROM transactions
+			WHERE schedule_id = $1
+				AND paid_at IS NOT NULL
+	),
+	get_seats_id AS (
+			SELECT seats_id AS seat_code_id
+			FROM transactions_seats
+			WHERE transactions_id IN (
+					SELECT transaction_id FROM get_paid_transaction_id_by_schedule
+			)
+	)
+	SELECT COALESCE(
+			ARRAY_AGG(DISTINCT sc.seat_code ORDER BY sc.seat_code),
+			'{}'
+	) AS seat_codes
+	FROM seat_codes sc
+	WHERE sc.id IN (SELECT seat_code_id FROM get_seats_id);
+	`
+
+	var seatCodes []string
+	if err := o.db.QueryRow(ctx, query, scheduleID).Scan(&seatCodes); err != nil {
+		return nil, err
+	}
+	return seatCodes, nil
 }
 
 // --- Method used in Payment Page, when user clicked "Check Payment"

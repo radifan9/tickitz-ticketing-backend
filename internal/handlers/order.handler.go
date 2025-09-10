@@ -39,6 +39,22 @@ func (o *OrderHandler) ListSchedules(ctx *gin.Context) {
 	})
 }
 
+func (o *OrderHandler) GetSoldSeatsByScheduleID(ctx *gin.Context) {
+	scheduleID := ctx.Param("id")
+
+	soldSeats, err := o.or.GetSoldSeatsByScheduleID(ctx, scheduleID)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, err.Error(), "failed to get sold seats by schedule_id")
+		return
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    soldSeats,
+	})
+}
+
 // --- Method used in Payment Page, when user clicked "Check Payment"
 func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
 	var body models.Transaction
