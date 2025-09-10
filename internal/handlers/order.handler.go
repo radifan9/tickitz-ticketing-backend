@@ -22,24 +22,20 @@ func NewOrderHandler(or *repositories.OrderRepository) *OrderHandler {
 func (o *OrderHandler) ListSchedules(ctx *gin.Context) {
 	var queryParams models.ScheduleFilter
 	if err := ctx.ShouldBindQuery(&queryParams); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   err.Error(),
-		})
+		utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to get schedule")
+		return
 	}
 
 	schedules, err := o.or.FilterSchedule(ctx, queryParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"sucess": false,
-			"error":  err.Error(),
-		})
+		utils.HandleError(ctx, http.StatusInternalServerError, err.Error(), "failed to get schedule")
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    schedules,
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    schedules,
 	})
 }
 

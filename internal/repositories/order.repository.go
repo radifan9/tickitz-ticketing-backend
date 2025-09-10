@@ -20,11 +20,6 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 
 func (o *OrderRepository) FilterSchedule(ctx context.Context, queryParam models.ScheduleFilter) ([]models.Schedule, error) {
 
-	log.Println("movieID", queryParam.MovieID)
-	log.Println("cityID", queryParam.CityID)
-	log.Println("showTimeID", queryParam.ShowTimeID)
-	log.Println("date", queryParam.Date)
-
 	query := `
 			SELECT 
 				s.id,
