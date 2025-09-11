@@ -60,7 +60,8 @@ func (o *OrderRepository) FilterSchedule(ctx context.Context, queryParam models.
 			&s.CinemaID, &s.CinemaName, &s.CinemaImg,
 			&s.ShowDate,
 		); err != nil {
-			return nil, err
+			// return nil, err
+			return []models.Schedule{}, err
 		}
 		schedules = append(schedules, s)
 	}
@@ -188,4 +189,57 @@ func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t 
 	}
 
 	return newT, nil
+}
+
+// --- Transaction History
+func (o *OrderRepository) ListTransaction(ctx context.Context, userID string) ([]models.TransactionHistory, error) {
+	query := `
+		select 
+			t.id,
+			c.name as cinema, c.img as cinema_img, s.show_date, m.title,
+			ar.age_rating, st.start_at, array_agg(seat_code) as seats ,
+			t.total_payment, t.phone_number, 
+			t.paid_at, t.scanned_at, t.schedule_id
+		from transactions t
+			join schedules s on t.schedule_id = s.id
+			join movies m on s.movie_id = m.id
+			join cinemas c on s.cinema_id = c.id
+			join age_ratings ar on m.age_rating_id = ar.id
+			join show_times st on s.show_time_id = st.id
+			join transactions_seats ts on t.id = ts.transactions_id
+			join seat_codes sc on ts.seats_id = sc.id
+		where t.user_id = $1
+		group by t.id, c.name, c.img, s.show_date, m.title,
+			ar.age_rating, st.start_at, 
+			t.total_payment, t.phone_number, 
+			t.paid_at, t.scanned_at, t.schedule_id
+	`
+	rows, err := o.db.Query(ctx, query, userID)
+	if err != nil {
+		return []models.TransactionHistory{}, err
+	}
+
+	var listTransaction []models.TransactionHistory
+	for rows.Next() {
+		var t models.TransactionHistory
+		if err := rows.Scan(
+			&t.ID,
+			&t.Cinema,
+			&t.CinemaImg,
+			&t.ShowDate,
+			&t.Title,
+			&t.AgeRating,
+			&t.StartAt,
+			&t.Seats,
+			&t.TotalPayment,
+			&t.PhoneNumber,
+			&t.PaidAt,
+			&t.ScannedAt,
+			&t.ScheduleID,
+		); err != nil {
+			return []models.TransactionHistory{}, err
+		}
+		listTransaction = append(listTransaction, t)
+	}
+	return listTransaction, nil
 }

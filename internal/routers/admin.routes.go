@@ -11,19 +11,15 @@ import (
 func RegisterAdminRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	adminRepo := repositories.NewMovieRepository(db)
 	adminHandler := handlers.NewMovieHandler(adminRepo)
-
-	// Only Admin can do this
 	admin := v1.Group("/admin")
-	{
-		admin.GET("/movies",
-			middlewares.VerifyToken,
-			middlewares.Access("admin"),
-			adminHandler.ListAllMovies)
 
-		admin.DELETE("/movies/:id/archive",
-			middlewares.VerifyToken,
-			middlewares.Access("admin"),
-			adminHandler.ArchiveMovieByID)
-	}
+	admin.GET("/movies",
+		middlewares.VerifyToken,
+		middlewares.Access("admin"),
+		adminHandler.ListAllMovies)
 
+	admin.DELETE("/movies/:id/archive",
+		middlewares.VerifyToken,
+		middlewares.Access("admin"),
+		adminHandler.ArchiveMovieByID)
 }

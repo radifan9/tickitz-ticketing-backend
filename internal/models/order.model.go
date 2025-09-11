@@ -24,19 +24,29 @@ type ScheduleFilter struct {
 }
 
 type Transaction struct {
-	ID           string    `json:"id"`
-	UserID       string    `json:"user_id"`
-	PaymentID    int       `json:"payment_id"`
-	TotalPayment int       `json:"total_payment"`
-	FullName     string    `json:"full_name"`
-	Email        string    `json:"email"`
-	PhoneNumber  string    `json:"phone_number"`
-	PaidAt       time.Time `json:"paid_at"`
-	ScannedAt    time.Time `json:"scanned_at"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	ScheduleID   int       `json:"schedule_id"`
-	Seats        []string  `json:"seats"`
+	ID           string     `json:"id,omitempty"`
+	UserID       string     `json:"user_id,omitempty"`
+	PaymentID    int        `json:"payment_id,omitempty"`
+	TotalPayment int        `json:"total_payment"`
+	FullName     string     `json:"full_name"`
+	Email        string     `json:"email"`
+	PhoneNumber  string     `json:"phone_number"`
+	PaidAt       *time.Time `json:"paid_at,omitempty"`
+	ScannedAt    *time.Time `json:"scanned_at,omitempty"`
+	CreatedAt    *time.Time `json:"created_at,omitempty"`
+	UpdatedAt    *time.Time `json:"updated_at,omitempty"`
+	ScheduleID   int        `json:"schedule_id"`
+	Seats        []string   `json:"seats"`
+}
+
+type TransactionHistory struct {
+	Transaction
+	Cinema    string    `json:"cinema"`
+	CinemaImg string    `json:"cinema_img"`
+	ShowDate  time.Time `json:"show_date"`
+	Title     string    `json:"title"`
+	AgeRating string    `json:"age_rating"`
+	StartAt   string    `json:"start_at"`
 }
 
 type SeatCodes struct {

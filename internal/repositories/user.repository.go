@@ -50,7 +50,7 @@ func (u *UserRepository) GetPasswordFromID(ctx context.Context, id string) (mode
 }
 
 // GetProfileByUserID fetches a user's profile from user_profiles by user_id
-func (u *UserRepository) GetProfileByUserID(ctx context.Context, userID string) (models.UserProfile, error) {
+func (u *UserRepository) GetProfile(ctx context.Context, userID string) (models.UserProfile, error) {
 	query := `
 			SELECT 
 					user_id,

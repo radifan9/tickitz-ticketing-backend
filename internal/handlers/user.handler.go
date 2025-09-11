@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/repositories"
+	"github.com/radifan9/tickitz-ticketing-backend/internal/utils"
 	"github.com/radifan9/tickitz-ticketing-backend/pkg"
 )
 
@@ -145,27 +146,25 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 
 // GetProfileByUserID handles GET /users/:user_id/profile
 // It fetches the user's profile from the repository and returns it as JSON
-func (u *UserHandler) GetProfileByUserID(ctx *gin.Context) {
-	userID := ctx.Param("id")
-	if userID == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "user_id is required",
-		})
+func (u *UserHandler) GetProfile(ctx *gin.Context) {
+	// Get the userID from token
+	claims, _ := ctx.Get("claims")
+	user, ok := claims.(pkg.Claims)
+	if !ok {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot cast into pkg.claims")
 		return
 	}
 
-	profile, err := u.ur.GetProfileByUserID(ctx, userID)
+	profile, err := u.ur.GetProfile(ctx, user.UserId)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"success": false,
-			"error":   "profile not found",
-		})
+		utils.HandleError(ctx, http.StatusOK, err.Error(), "profile not found")
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    profile,
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    profile,
 	})
+
 }
