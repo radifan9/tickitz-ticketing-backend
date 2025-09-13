@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"reflect"
@@ -11,115 +10,115 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
+	"github.com/radifan9/tickitz-ticketing-backend/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 
 // Struct that holds shared dependency
 type MovieRepository struct {
-	db  *pgxpool.Pool
-	rdb *redis.Client
+	db    *pgxpool.Pool
+	rdb   *redis.Client
+	cache *utils.CacheManager
 }
 
 // Constructor function
 // Purpose: creates a repository instance in a valid state (db injected), returning a pointer to use its methods.
 func NewMovieRepository(db *pgxpool.Pool, rdb *redis.Client) *MovieRepository {
 	return &MovieRepository{
-		db:  db,
-		rdb: rdb,
+		db:    db,
+		rdb:   rdb,
+		cache: utils.NewCacheManager(rdb),
 	}
 }
 
+// --- List Upcoming Movies (not yet released current_date < release_dateI)
 func (m *MovieRepository) ListUpcomingMovies(ctx context.Context) ([]models.Movie, error) {
-	// Cache-aside pattern
-	// Cek redis terlebih dahulu
+	var movies []models.Movie
 	redisKey := "tickitz:upcoming"
-	cmd := m.rdb.Get(ctx, redisKey)
-	if cmd.Err() != nil {
-		if cmd.Err() == redis.Nil {
-			log.Printf("Key %s does not exist\n", redisKey)
-		} else {
-			log.Println("Redis Error. \nCause: ", cmd.Err().Error())
-		}
-	} else {
-		// Cache hit
-		var cachedUpcomingMovies []models.Movie
-		cmdByte, err := cmd.Bytes()
-		if err != nil {
-			log.Println("internal server error.\nCause: ", err.Error())
-		} else {
-			if err := json.Unmarshal(cmdByte, &cachedUpcomingMovies); err != nil {
-				log.Println("internal server error.\nCause: ", err.Error())
-			}
-			// Pastikan ada isinya
-			if len(cachedUpcomingMovies) > 0 {
-				log.Println("✅ cache-hit!")
-				return cachedUpcomingMovies, nil
-			}
-		}
-	}
 
-	// Cache miss
-	log.Println("❎ cache-missed!")
-	// Query for getting upcoming (not release yet) movies
+	// Use the cache utils with cache-aside pattern
+	err := m.cache.CacheOrFetch(
+		ctx,
+		redisKey,
+		24*time.Hour,
+		&movies,
+		func() (interface{}, error) {
+			// This function will only be called on cache-miss
+			return m.fetchUpcomingMoviesFromDB(ctx)
+		},
+	)
+
+	return movies, err
+}
+
+// --- Fetching the Upcoming Movies
+func (m *MovieRepository) fetchUpcomingMoviesFromDB(ctx context.Context) ([]models.Movie, error) {
 	query := `
-	SELECT
-		m.id,
-		m.title,
-		m.poster_img,
-		m.release_date,
-		ARRAY_AGG(
-			g.name
-			ORDER BY
+		SELECT
+			m.id,
+			m.title,
+			m.poster_img,
+			m.release_date,
+			ARRAY_AGG(
 				g.name
-		) AS genres
-	FROM
-		movies m
-		JOIN movie_genres mg ON m.id = mg.movie_id
-		JOIN genres g ON mg.genre_id = g.id
-	WHERE
-		m.release_date > CURRENT_DATE
-	GROUP BY
-		m.id,
-		m.title,
-		m.poster_img,
-		m.release_date
-	ORDER BY
-		m.release_date ASC`
+				ORDER BY
+					g.name
+			) AS genres
+		FROM
+			movies m
+			JOIN movie_genres mg ON m.id = mg.movie_id
+			JOIN genres g ON mg.genre_id = g.id
+		WHERE
+			m.release_date > CURRENT_DATE
+		GROUP BY
+			m.id,
+			m.title,
+			m.poster_img,
+			m.release_date
+		ORDER BY
+			m.release_date ASC
+	`
 
 	rows, err := m.db.Query(ctx, query)
 	if err != nil {
-		log.Println("internal server error : ", err.Error())
 		return []models.Movie{}, err
 	}
 	defer rows.Close()
 
 	var movies []models.Movie
 
-	// Membaca rows/record
+	// Read rows/records
 	for rows.Next() {
 		var movie models.Movie
 		if err := rows.Scan(&movie.ID, &movie.Title, &movie.PosterImg, &movie.ReleaseDate, &movie.Genres); err != nil {
-			log.Println("scan error, ", err.Error())
 			return []models.Movie{}, err
 		}
 		movies = append(movies, movie)
 	}
 
-	// Renew cache
-	bt, err := json.Marshal(movies)
-	if err != nil {
-		log.Println("internal server error.\nCause: ", err.Error())
-	} else {
-		if err := m.rdb.Set(ctx, redisKey, string(bt), 5*time.Minute).Err(); err != nil {
-			log.Println("redis error.\nCause: ", err.Error())
-		}
-	}
-
 	return movies, nil
 }
 
-// --- Get Popular Movie
+// List Popular Movies
 func (m *MovieRepository) ListPopularMovies(ctx context.Context) ([]models.Movie, error) {
+	var movies []models.Movie
+	rediskey := "tickitz:popular"
+
+	err := m.cache.CacheOrFetch(
+		ctx,
+		rediskey,
+		24*time.Hour,
+		&movies,
+		func() (interface{}, error) {
+			return m.fetchPopularMovies(ctx)
+		},
+	)
+
+	return movies, err
+}
+
+// --- Fetching the Popular Movie
+func (m *MovieRepository) fetchPopularMovies(ctx context.Context) ([]models.Movie, error) {
 	query := `
 	with get_popular_movie_id as (
 		select
@@ -424,3 +423,7 @@ func (m *MovieRepository) ListAllMovies(ctx context.Context) ([]models.Movie, er
 
 	return movies, nil
 }
+
+// func (m *MovieRepository) CreateMovie(ctx context.Context) (models.Movie, error) {
+
+// }
