@@ -15,6 +15,8 @@ func RegisterMovieRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Clien
 
 	movies.GET("/", movieHandler.ListFilteredMovies)
 	movies.GET("/:id", movieHandler.GetMovieDetails)
+
+	// Sub-resources for movies
 	movies.GET("/upcoming", movieHandler.ListUpcomingMovies)
 	movies.GET("/popular", movieHandler.ListPopularMovies)
 

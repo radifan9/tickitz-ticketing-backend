@@ -12,11 +12,18 @@ func RegisterUserRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	userRepo := repositories.NewUserRepository(db)
 	userHandler := handlers.NewUserHandler(userRepo)
 
-	v1.POST("/register", userHandler.Register)
-	v1.POST("/login", userHandler.Login)
-	v1.GET("/profile", middlewares.VerifyToken,
-		middlewares.Access("admin", "user"), userHandler.GetProfile)
-	v1.PATCH("/profile", middlewares.VerifyToken,
-		middlewares.Access("admin", "user"), userHandler.EditProfile)
+	// Authentication routes (no auth required)
+	auth := v1.Group("/auth")
+	{
+		auth.POST("/register", userHandler.Register) // POST /api/v1/auth/register
+		auth.POST("/login", userHandler.Login)       // POST /api/v1/auth/login
+	}
 
+	// User profile routes (auth required)
+	users := v1.Group("/users")
+	users.Use(middlewares.VerifyToken, middlewares.Access("admin", "user"))
+	{
+		users.GET("/profile", userHandler.GetProfile)    // GET /api/v1/users/profile
+		users.PATCH("/profile", userHandler.EditProfile) // PATCH /api/v1/users/profile
+	}
 }

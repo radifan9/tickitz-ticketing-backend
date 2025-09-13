@@ -12,8 +12,8 @@ func RegisterOrderRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	orderRepo := repositories.NewOrderRepository(db)
 	orderHandler := handlers.NewOrderHandler(orderRepo)
 	orders := v1.Group("/orders")
+	orders.Use(middlewares.VerifyToken, middlewares.Access("user"))
 
 	orders.POST("/", orderHandler.AddTransaction)
-	orders.GET("/histories", middlewares.VerifyToken,
-		middlewares.Access("user"), orderHandler.ListTransaction)
+	orders.GET("/histories", orderHandler.ListTransaction)
 }

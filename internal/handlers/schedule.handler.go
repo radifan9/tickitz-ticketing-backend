@@ -39,7 +39,6 @@ func (s *ScheduleHandler) ListSchedules(ctx *gin.Context) {
 
 func (s *ScheduleHandler) GetSoldSeatsByScheduleID(ctx *gin.Context) {
 	scheduleID := ctx.Param("id")
-	
 
 	soldSeats, err := s.sr.GetSoldSeatsByScheduleID(ctx, scheduleID)
 	if err != nil {

@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,7 +18,7 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 }
 
 // --- Method used in Payment Page, when user clicked "Check Payment"
-func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t models.Transaction) (models.Transaction, error) {
+func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t models.Transaction, userID string) (models.Transaction, error) {
 	// --- --- Build Query for adding seats
 	placeholders := make([]string, len(t.Seats))
 	args := make([]interface{}, len(t.Seats))
@@ -42,8 +41,6 @@ func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t 
 		insertedSeatIDs = append(insertedSeatIDs, id)
 	}
 
-	log.Println(insertedSeatIDs)
-
 	// --- --- Build Query for add new transaction (Assuming user paid directly)
 	query := `
 		insert into
@@ -63,8 +60,8 @@ func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t 
 		`
 
 	var newT models.Transaction
-	err2 := o.db.QueryRow(ctx, query,
-		t.UserID,
+	if err := o.db.QueryRow(ctx, query,
+		userID,
 		t.PaymentID,
 		t.TotalPayment,
 		t.FullName,
@@ -74,12 +71,11 @@ func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t 
 	).Scan(
 		&newT.ID,
 		&newT.UserID,
-		&newT.ScheduleID)
-	if err2 != nil {
-		return models.Transaction{}, err2
+		&newT.ScheduleID); err != nil {
+		return models.Transaction{}, err
 	}
 
-	// Populate the rest of data from input (not from returning)
+	// --- --- Populate the rest of data from input (not from returning)
 	newT.PaymentID = t.PaymentID
 	newT.TotalPayment = t.TotalPayment
 	newT.FullName = t.FullName
@@ -97,9 +93,8 @@ func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t 
 	}
 	insertTSQuery := "insert into transactions_seats (transactions_id, seats_id) values " + strings.Join(placeholders3, ",")
 
-	_, err3 := o.db.Query(ctx, insertTSQuery, args3...)
-	if err3 != nil {
-		return models.Transaction{}, err3
+	if _, err := o.db.Query(ctx, insertTSQuery, args3...); err != nil {
+		return models.Transaction{}, err
 	}
 
 	return newT, nil

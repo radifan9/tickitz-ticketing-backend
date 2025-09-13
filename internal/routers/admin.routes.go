@@ -13,14 +13,8 @@ func RegisterAdminRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Clien
 	adminRepo := repositories.NewMovieRepository(db, rdb)
 	adminHandler := handlers.NewMovieHandler(adminRepo)
 	admin := v1.Group("/admin")
+	admin.Use(middlewares.VerifyToken, middlewares.Access("admin"))
 
-	admin.GET("/movies",
-		middlewares.VerifyToken,
-		middlewares.Access("admin"),
-		adminHandler.ListAllMovies)
-
-	admin.DELETE("/movies/:id/archive",
-		middlewares.VerifyToken,
-		middlewares.Access("admin"),
-		adminHandler.ArchiveMovieByID)
+	admin.GET("/movies", adminHandler.ListAllMovies)
+	admin.DELETE("/movies/:id/archive", adminHandler.ArchiveMovieByID)
 }

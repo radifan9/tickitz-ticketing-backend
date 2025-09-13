@@ -22,6 +22,14 @@ func NewOrderHandler(or *repositories.OrderRepository) *OrderHandler {
 
 // --- Method used in Payment Page, when user clicked "Check Payment"
 func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
+	// Get userID from token
+	claims, _ := ctx.Get("claims")
+	user, ok := claims.(pkg.Claims)
+	if !ok {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot cast into pkg.claims")
+		return
+	}
+
 	var body models.Transaction
 	if err := ctx.ShouldBind(&body); err != nil {
 		log.Println("error : ", err.Error())
@@ -33,7 +41,7 @@ func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
 		return
 	}
 
-	transaction, err := o.or.AddNewTransactionsAndSeatCodes(ctx, body)
+	transaction, err := o.or.AddNewTransactionsAndSeatCodes(ctx, body, user.UserId)
 	if err != nil {
 		log.Println("error : ", err.Error())
 		utils.HandleResponse(ctx, http.StatusInternalServerError, models.ErrorResponse{
