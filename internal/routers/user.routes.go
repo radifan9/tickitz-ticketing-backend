@@ -16,5 +16,7 @@ func RegisterUserRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	v1.POST("/login", userHandler.Login)
 	v1.GET("/profile", middlewares.VerifyToken,
 		middlewares.Access("admin", "user"), userHandler.GetProfile)
+	v1.PATCH("/profile", middlewares.VerifyToken,
+		middlewares.Access("admin", "user"), userHandler.EditProfile)
 
 }

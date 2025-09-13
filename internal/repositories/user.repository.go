@@ -76,3 +76,45 @@ func (u *UserRepository) GetProfile(ctx context.Context, userID string) (models.
 	}
 	return p, nil
 }
+
+func (u *UserRepository) EditProfile(ctx context.Context, userID string, body models.EditUserProfile, imagePath string) (models.UserProfile, error) {
+	sql := "UPDATE user_profiles SET "
+	values := []any{}
+
+	if body.FirstName != "" {
+		sql += fmt.Sprintf("%s=$%d, ", "first_name", len(values)+1)
+		values = append(values, body.FirstName)
+	}
+	if body.LastName != "" {
+		sql += fmt.Sprintf("%s=$%d, ", "last_name", len(values)+1)
+		values = append(values, body.LastName)
+	}
+	if body.PhoneNumber != "" {
+		sql += fmt.Sprintf("%s=$%d, ", "phone_number", len(values)+1)
+		values = append(values, body.PhoneNumber)
+	}
+	// if you decide to save image filename:
+	if body.Img != nil {
+		sql += fmt.Sprintf("%s=$%d, ", "img", len(values)+1)
+		values = append(values, imagePath)
+	}
+
+	sql += fmt.Sprintf("updated_at=CURRENT_TIMESTAMP WHERE user_id=$%d RETURNING user_id, first_name, last_name, img, phone_number, points, created_at, updated_at", len(values)+1)
+	values = append(values, userID)
+
+	var profile models.UserProfile
+	if err := u.db.QueryRow(ctx, sql, values...).Scan(
+		&profile.UserID,
+		&profile.FirstName,
+		&profile.LastName,
+		&profile.Img,
+		&profile.PhoneNumber,
+		&profile.Points,
+		&profile.CreatedAt,
+		&profile.UpdatedAt,
+	); err != nil {
+		return models.UserProfile{}, err
+	}
+
+	return profile, nil
+}

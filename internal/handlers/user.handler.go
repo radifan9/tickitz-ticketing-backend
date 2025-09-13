@@ -2,9 +2,12 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
@@ -167,4 +170,51 @@ func (u *UserHandler) GetProfile(ctx *gin.Context) {
 		Data:    profile,
 	})
 
+}
+
+func (u *UserHandler) EditProfile(ctx *gin.Context) {
+	// Get image from form-data
+	var body models.EditUserProfile
+	log.Println("--- Begin ShouldBind")
+	if err := ctx.ShouldBind(&body); err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", err.Error())
+		return
+	}
+
+	// Get the userID from token
+	claims, _ := ctx.Get("claims")
+	user, ok := claims.(pkg.Claims)
+	if !ok {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot cast into pkg.claims")
+		return
+	}
+
+	// Storing image process
+	file := body.Img
+	ext := filepath.Ext(file.Filename)
+	re := regexp.MustCompile("(png|jpg|jpeg|webp)$")
+	if !re.Match([]byte(ext)) {
+		// Abort upload
+	}
+	filename := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), user.UserId, ext)
+	location := filepath.Join("public", filename)
+	if err := ctx.SaveUploadedFile(file, location); err != nil {
+		utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
+		return
+	}
+
+	log.Println("Success uploading image")
+	log.Println("Location: ", location)
+
+	editedProfile, err := u.ur.EditProfile(ctx.Request.Context(), user.UserId, body, location)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot edited user profile")
+		return
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    editedProfile,
+	})
 }

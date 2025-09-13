@@ -2,27 +2,64 @@ package repositories
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
+	"github.com/redis/go-redis/v9"
 )
 
 // Struct that holds shared dependency
 type MovieRepository struct {
-	db *pgxpool.Pool
+	db  *pgxpool.Pool
+	rdb *redis.Client
 }
 
 // Constructor function
 // Purpose: creates a repository instance in a valid state (db injected), returning a pointer to use its methods.
-func NewMovieRepository(db *pgxpool.Pool) *MovieRepository {
-	return &MovieRepository{db: db}
+func NewMovieRepository(db *pgxpool.Pool, rdb *redis.Client) *MovieRepository {
+	return &MovieRepository{
+		db:  db,
+		rdb: rdb,
+	}
 }
 
 func (m *MovieRepository) ListUpcomingMovies(ctx context.Context) ([]models.Movie, error) {
+	// Cache-aside pattern
+	// Cek redis terlebih dahulu
+	redisKey := "tickitz:upcoming"
+	cmd := m.rdb.Get(ctx, redisKey)
+	if cmd.Err() != nil {
+		if cmd.Err() == redis.Nil {
+			log.Printf("Key %s does not exist\n", redisKey)
+		} else {
+			log.Println("Redis Error. \nCause: ", cmd.Err().Error())
+		}
+	} else {
+		// Cache hit
+		var cachedUpcomingMovies []models.Movie
+		cmdByte, err := cmd.Bytes()
+		if err != nil {
+			log.Println("internal server error.\nCause: ", err.Error())
+		} else {
+			if err := json.Unmarshal(cmdByte, &cachedUpcomingMovies); err != nil {
+				log.Println("internal server error.\nCause: ", err.Error())
+			}
+			// Pastikan ada isinya
+			if len(cachedUpcomingMovies) > 0 {
+				log.Println("✅ cache-hit!")
+				return cachedUpcomingMovies, nil
+			}
+		}
+	}
+
+	// Cache miss
+	log.Println("❎ cache-missed!")
 	// Query for getting upcoming (not release yet) movies
 	query := `
 	SELECT
@@ -66,6 +103,16 @@ func (m *MovieRepository) ListUpcomingMovies(ctx context.Context) ([]models.Movi
 			return []models.Movie{}, err
 		}
 		movies = append(movies, movie)
+	}
+
+	// Renew cache
+	bt, err := json.Marshal(movies)
+	if err != nil {
+		log.Println("internal server error.\nCause: ", err.Error())
+	} else {
+		if err := m.rdb.Set(ctx, redisKey, string(bt), 5*time.Minute).Err(); err != nil {
+			log.Println("redis error.\nCause: ", err.Error())
+		}
 	}
 
 	return movies, nil

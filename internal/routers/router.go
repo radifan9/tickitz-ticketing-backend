@@ -8,16 +8,17 @@ import (
 	"github.com/radifan9/tickitz-ticketing-backend/internal/middlewares"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/utils"
+	"github.com/redis/go-redis/v9"
 
 	docs "github.com/radifan9/tickitz-ticketing-backend/docs"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func InitRouter(db *pgxpool.Pool) *gin.Engine {
+func InitRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 	router := gin.Default()
 
-	// Tambahkan cors
+	// Tambahkan CORS
 	router.Use(middlewares.CORSMiddleware)
 
 	// Swagger
@@ -28,9 +29,12 @@ func InitRouter(db *pgxpool.Pool) *gin.Engine {
 	v1 := router.Group("/api/v1")
 	{
 		RegisterUserRoutes(v1, db)
-		RegisterMovieRoutes(v1, db)
+		RegisterMovieRoutes(v1, db, rdb)
 		RegisterOrderRoutes(v1, db)
-		RegisterAdminRoutes(v1, db)
+		RegisterAdminRoutes(v1, db, rdb)
+
+		// Static File Image
+		v1.Static("/img", "public")
 	}
 
 	// Catch all route

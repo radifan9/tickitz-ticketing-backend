@@ -6,10 +6,11 @@ import (
 	"github.com/radifan9/tickitz-ticketing-backend/internal/handlers"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/middlewares"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/repositories"
+	"github.com/redis/go-redis/v9"
 )
 
-func RegisterAdminRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
-	adminRepo := repositories.NewMovieRepository(db)
+func RegisterAdminRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Client) {
+	adminRepo := repositories.NewMovieRepository(db, rdb)
 	adminHandler := handlers.NewMovieHandler(adminRepo)
 	admin := v1.Group("/admin")
 
