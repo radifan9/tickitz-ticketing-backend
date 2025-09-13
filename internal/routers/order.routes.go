@@ -11,11 +11,9 @@ import (
 func RegisterOrderRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	orderRepo := repositories.NewOrderRepository(db)
 	orderHandler := handlers.NewOrderHandler(orderRepo)
-	order := v1.Group("/order")
+	orders := v1.Group("/orders")
 
-	order.POST("/", orderHandler.AddTransaction)
-	order.GET("/schedules", orderHandler.ListSchedules)
-	order.GET("/soldseats/:id", orderHandler.GetSoldSeatsByScheduleID)
-	order.GET("/histories", middlewares.VerifyToken,
+	orders.POST("/", orderHandler.AddTransaction)
+	orders.GET("/histories", middlewares.VerifyToken,
 		middlewares.Access("user"), orderHandler.ListTransaction)
 }

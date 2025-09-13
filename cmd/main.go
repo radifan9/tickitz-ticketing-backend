@@ -35,27 +35,21 @@ func main() {
 		log.Println("ping to DB failed\nCause: ", err.Error())
 		return
 	}
-	log.Println("Database connected.")
+	log.Println("✅ PostgreSQL connected.")
 
 	// Redis Initialization
-	rdb, err := configs.InitRDB()
-	if err != nil {
-		log.Println("failed to connect to redis database\nCause: ", err.Error())
-		return
-	}
+	rdb := configs.InitRDB()
 	defer rdb.Close()
-	log.Println("Redis connected.")
 
 	// Test Redis Connection
 	if _, err := rdb.Ping(context.Background()).Result(); err != nil {
 		log.Println("failed to ping redis database\nCause: ", err.Error())
 		return
 	}
-	log.Println("Successfully connected to Redis!")
+	log.Println("✅ Successfully connect & ping to rdb!")
 
 	// Engine Gin Initialization
 	router := routers.InitRouter(db, rdb)
-
 	router.Run(":3000")
 
 	// Flow of the program
