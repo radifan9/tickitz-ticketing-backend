@@ -273,3 +273,56 @@ func (u *UserHandler) EditProfile(ctx *gin.Context) {
 		Data:    editedProfile,
 	})
 }
+
+func (u *UserHandler) ChangePassword(ctx *gin.Context) {
+	var req models.ChangePasswordRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.HandleError(ctx, http.StatusBadRequest, "bad request", err.Error())
+		return
+	}
+
+	// Get user ID from token claims
+	claims, _ := ctx.Get("claims")
+	userClaims, ok := claims.(pkg.Claims)
+	if !ok {
+		utils.HandleError(ctx, http.StatusUnauthorized, "unauthorized", "invalid claims")
+		return
+	}
+
+	// Fetch current password hash from DB
+	userCred, err := u.ur.GetPasswordFromID(ctx, userClaims.UserId)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusBadRequest, "bad request", "failed to fetch user credentials")
+		return
+	}
+
+	// Compare old password
+	hashCfg := pkg.NewHashConfig()
+	isMatched, err := hashCfg.CompareHashAndPassword(req.OldPassword, userCred.Password)
+	if err != nil || !isMatched {
+		utils.HandleError(ctx, http.StatusUnauthorized, "unauthorized", "old password does not match")
+		return
+	}
+
+	// Hash new password
+	hashCfg.UseRecommended()
+	hashedPassword, err := hashCfg.GenHash(req.NewPassword)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "failed to hash new password")
+		return
+	}
+
+	// Update password
+	if err := u.ur.UpdatePassword(ctx, userClaims.UserId, hashedPassword); err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", err.Error())
+		return
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data: map[string]string{
+			"message": "Password changed successfully",
+		},
+	})
+}

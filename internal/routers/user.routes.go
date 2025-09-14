@@ -26,7 +26,8 @@ func RegisterUserRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Client
 	users := v1.Group("/users")
 	users.Use(verifyTokenWithBlacklist, middlewares.Access("admin", "user"))
 	{
-		users.GET("/profile", userHandler.GetProfile)    // GET /api/v1/users/profile
-		users.PATCH("/profile", userHandler.EditProfile) // PATCH /api/v1/users/profile
+		users.GET("/profile", userHandler.GetProfile)        // GET /api/v1/users/profile
+		users.PATCH("/profile", userHandler.EditProfile)     // PATCH /api/v1/users/profile
+		users.PATCH("/password", userHandler.ChangePassword) // PATCH /api/v1/users/password
 	}
 }

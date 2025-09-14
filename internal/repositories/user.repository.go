@@ -123,3 +123,12 @@ func (u *UserRepository) EditProfile(ctx context.Context, userID string, body mo
 
 	return profile, nil
 }
+
+func (u *UserRepository) UpdatePassword(ctx context.Context, userID, hashedPassword string) error {
+	query := `UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	_, err := u.db.Exec(ctx, query, hashedPassword, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+	return nil
+}
