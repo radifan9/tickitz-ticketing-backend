@@ -20,14 +20,14 @@ import (
 
 // ur : user repositories
 type UserHandler struct {
-	ur        *repositories.UserRepository
-	authCache *utils.AuthCacheManager
+	ur *repositories.UserRepository
+	ac *utils.AuthCacheManager
 }
 
 func NewUserHandler(ur *repositories.UserRepository, rdb *redis.Client) *UserHandler {
 	return &UserHandler{
-		ur:        ur,
-		authCache: utils.NewAuthCacheManager(rdb),
+		ur: ur,
+		ac: utils.NewAuthCacheManager(rdb),
 	}
 }
 
@@ -153,7 +153,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	})
 }
 
-// --- Logout
+// User Logout
 func (u *UserHandler) Logout(ctx *gin.Context) {
 	// Extract the token from Authorization header
 	authHeader := ctx.GetHeader("Authorization")
@@ -183,14 +183,15 @@ func (u *UserHandler) Logout(ctx *gin.Context) {
 	}
 
 	// Calculate remaining TTL for the token
-	// Assuming your JWT has an expiration time
-	// expirationTime := time.Unix(userClaims.ExpiresAt, 0)
 	expirationTime := time.Unix(userClaims.ExpiresAt.Unix(), 0)
 	remainingTTL := time.Until(expirationTime)
 
+	log.Println("expirationTime : ", expirationTime)
+	log.Println("remainingTTL : ", remainingTTL)
+
 	// Only blacklist if token hasn't expired yet
 	if remainingTTL > 0 {
-		if err := u.authCache.BlacklistToken(ctx.Request.Context(), tokenString, remainingTTL); err != nil {
+		if err := u.ac.BlacklistToken(ctx.Request.Context(), tokenString, remainingTTL); err != nil {
 			utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "failed to logout")
 			return
 		}
@@ -233,7 +234,6 @@ func (u *UserHandler) GetProfile(ctx *gin.Context) {
 func (u *UserHandler) EditProfile(ctx *gin.Context) {
 	// Get image from form-data
 	var body models.EditUserProfile
-	log.Println("--- Begin ShouldBind")
 	if err := ctx.ShouldBind(&body); err != nil {
 		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", err.Error())
 		return
@@ -260,9 +260,6 @@ func (u *UserHandler) EditProfile(ctx *gin.Context) {
 		utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
 		return
 	}
-
-	log.Println("Success uploading image")
-	log.Println("Location: ", location)
 
 	editedProfile, err := u.ur.EditProfile(ctx.Request.Context(), user.UserId, body, location)
 	if err != nil {

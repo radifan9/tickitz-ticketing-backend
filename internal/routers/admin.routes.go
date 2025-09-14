@@ -15,6 +15,7 @@ func RegisterAdminRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Clien
 	admin := v1.Group("/admin")
 	admin.Use(middlewares.VerifyToken, middlewares.Access("admin"))
 
+	// admin.POST("/movies", )
 	admin.GET("/movies", adminHandler.ListAllMovies)
 	admin.DELETE("/movies/:id/archive", adminHandler.ArchiveMovieByID)
 }

@@ -6,13 +6,16 @@ import (
 	"github.com/radifan9/tickitz-ticketing-backend/internal/handlers"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/middlewares"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/repositories"
+	"github.com/redis/go-redis/v9"
 )
 
-func RegisterOrderRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
+func RegisterOrderRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Client) {
 	orderRepo := repositories.NewOrderRepository(db)
 	orderHandler := handlers.NewOrderHandler(orderRepo)
+	VerifyTokenWithBlacklist := middlewares.VerifyTokenWithBlacklist(rdb)
+
 	orders := v1.Group("/orders")
-	orders.Use(middlewares.VerifyToken, middlewares.Access("user"))
+	orders.Use(VerifyTokenWithBlacklist, middlewares.Access("user"))
 
 	orders.POST("/", orderHandler.AddTransaction)
 	orders.GET("/histories", orderHandler.ListTransaction)

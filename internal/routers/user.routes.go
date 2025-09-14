@@ -12,21 +12,19 @@ import (
 func RegisterUserRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Client) {
 	userRepo := repositories.NewUserRepository(db, rdb)
 	userHandler := handlers.NewUserHandler(userRepo, rdb)
-
-	// Create middleware instance with redis client
-	// authMiddleware := middlewares.NewAuthMiddleware(rdb)
+	verifyTokenWithBlacklist := middlewares.VerifyTokenWithBlacklist(rdb) // Create middleware instance with redis client
 
 	// Authentication routes (no auth required)
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/register", userHandler.Register) // POST /api/v1/auth/register
 		auth.POST("/login", userHandler.Login)       // POST /api/v1/auth/login
-		auth.DELETE("/logout", middlewares.VerifyToken, userHandler.Logout, userHandler.Logout)
+		auth.DELETE("/logout", verifyTokenWithBlacklist, userHandler.Logout)
 	}
 
 	// User profile routes (auth required)
 	users := v1.Group("/users")
-	users.Use(middlewares.VerifyToken, middlewares.Access("admin", "user"))
+	users.Use(verifyTokenWithBlacklist, middlewares.Access("admin", "user"))
 	{
 		users.GET("/profile", userHandler.GetProfile)    // GET /api/v1/users/profile
 		users.PATCH("/profile", userHandler.EditProfile) // PATCH /api/v1/users/profile
