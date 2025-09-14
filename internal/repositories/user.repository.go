@@ -7,14 +7,19 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
+	"github.com/redis/go-redis/v9"
 )
 
 type UserRepository struct {
-	db *pgxpool.Pool
+	db  *pgxpool.Pool
+	rdb *redis.Client
 }
 
-func NewUserRepository(db *pgxpool.Pool) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(db *pgxpool.Pool, rdb *redis.Client) *UserRepository {
+	return &UserRepository{
+		db:  db,
+		rdb: rdb,
+	}
 }
 
 func (u *UserRepository) CreateUser(ctx context.Context, email, hashedPassword string) (models.User, error) {

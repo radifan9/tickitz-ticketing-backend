@@ -6,17 +6,22 @@ import (
 	"github.com/radifan9/tickitz-ticketing-backend/internal/handlers"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/middlewares"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/repositories"
+	"github.com/redis/go-redis/v9"
 )
 
-func RegisterUserRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
-	userRepo := repositories.NewUserRepository(db)
-	userHandler := handlers.NewUserHandler(userRepo)
+func RegisterUserRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Client) {
+	userRepo := repositories.NewUserRepository(db, rdb)
+	userHandler := handlers.NewUserHandler(userRepo, rdb)
+
+	// Create middleware instance with redis client
+	// authMiddleware := middlewares.NewAuthMiddleware(rdb)
 
 	// Authentication routes (no auth required)
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/register", userHandler.Register) // POST /api/v1/auth/register
 		auth.POST("/login", userHandler.Login)       // POST /api/v1/auth/login
+		auth.DELETE("/logout", middlewares.VerifyToken, userHandler.Logout, userHandler.Logout)
 	}
 
 	// User profile routes (auth required)

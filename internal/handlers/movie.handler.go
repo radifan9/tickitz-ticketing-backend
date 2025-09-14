@@ -52,8 +52,7 @@ func (m *MovieHandler) ListPopularMovies(ctx *gin.Context) {
 func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 	keywordParam := ctx.Query("keywords")
 	genreParam := ctx.Query("genres")
-	offsetParam := ctx.Query("offset")
-	limitParam := ctx.Query("limit")
+	pageParam := ctx.Query("page")
 
 	// Convert to []string
 	keywords := []string{}
@@ -72,22 +71,18 @@ func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 		}
 	}
 
-	// Convert offset & limit
-	offset, _ := strconv.Atoi(offsetParam)
-	limit, _ := strconv.Atoi(limitParam)
+	// Convert page
+	// If no page in param, then page = 0
+	page, _ := strconv.Atoi(pageParam)
 
 	// Set sensible defaults
-	if offset < 0 {
-		offset = 0
-	}
-	if limit <= 0 {
-		limit = 20
+	if page <= 0 {
+		page = 1
 	}
 
-	log.Println("keywords : ", keywords)
-	log.Println("genres : ", genres)
-	log.Println("offset : ", offset)
-	log.Println("limit : ", limit)
+	// Calculate Limit & Offset based on page
+	limit := 20
+	offset := (page - 1) * limit
 
 	// Build filter struct
 	filter := models.MovieFilter{
@@ -100,15 +95,14 @@ func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 	// Call repo
 	movies, err := m.mr.ListMovieFiltered(ctx, filter)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   err.Error()})
+		utils.HandleError(ctx, http.StatusInternalServerError, err.Error(), "cannot get filtered movies")
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"body":    movies,
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    movies,
 	})
 }
 

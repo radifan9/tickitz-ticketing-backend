@@ -28,7 +28,7 @@ func InitRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 	// API Version 1
 	v1 := router.Group("/api/v1")
 	{
-		RegisterUserRoutes(v1, db)
+		RegisterUserRoutes(v1, db, rdb)
 		RegisterMovieRoutes(v1, db, rdb)
 		RegisterOrderRoutes(v1, db)
 		RegisterSchedulesRoutes(v1, db)

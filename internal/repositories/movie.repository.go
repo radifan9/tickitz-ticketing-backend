@@ -117,7 +117,7 @@ func (m *MovieRepository) ListPopularMovies(ctx context.Context) ([]models.Movie
 	return movies, err
 }
 
-// --- Fetching the Popular Movie
+// Fetching the Popular Movie
 func (m *MovieRepository) fetchPopularMovies(ctx context.Context) ([]models.Movie, error) {
 	query := `
 	with get_popular_movie_id as (
@@ -190,6 +190,35 @@ func (m *MovieRepository) ListMovieFiltered(
 	ctx context.Context,
 	filter models.MovieFilter,
 ) ([]models.Movie, error) {
+
+	// Check if its the first page of all movies
+	if filter.Limit == 20 && filter.Offset == 0 {
+
+		// If it's first page then try to get the cache
+		var movies []models.Movie
+		rediskey := "tickitz:movies-all-first-page"
+
+		m.cache.CacheOrFetch(
+			ctx,
+			rediskey,
+			24*time.Hour,
+			&movies,
+			func() (interface{}, error) {
+				return m.fetchMovieFiltered(ctx, filter)
+			},
+		)
+
+		return movies, nil
+	} else {
+		movies, err := m.fetchMovieFiltered(ctx, filter)
+		if err != nil {
+			return []models.Movie{}, err
+		}
+		return movies, nil
+	}
+}
+
+func (m *MovieRepository) fetchMovieFiltered(ctx context.Context, filter models.MovieFilter) ([]models.Movie, error) {
 
 	// Base Query, this works even without any search query
 	baseQuery := `
@@ -282,7 +311,6 @@ func (m *MovieRepository) ListMovieFiltered(
 		}
 		movies = append(movies, movie)
 	}
-
 	return movies, nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,15 +15,20 @@ import (
 	"github.com/radifan9/tickitz-ticketing-backend/internal/repositories"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/utils"
 	"github.com/radifan9/tickitz-ticketing-backend/pkg"
+	"github.com/redis/go-redis/v9"
 )
 
 // ur : user repositories
 type UserHandler struct {
-	ur *repositories.UserRepository
+	ur        *repositories.UserRepository
+	authCache *utils.AuthCacheManager
 }
 
-func NewUserHandler(ur *repositories.UserRepository) *UserHandler {
-	return &UserHandler{ur: ur}
+func NewUserHandler(ur *repositories.UserRepository, rdb *redis.Client) *UserHandler {
+	return &UserHandler{
+		ur:        ur,
+		authCache: utils.NewAuthCacheManager(rdb),
+	}
 }
 
 // Register
@@ -144,6 +150,58 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"token":   jwtToken,
+	})
+}
+
+// --- Logout
+func (u *UserHandler) Logout(ctx *gin.Context) {
+	// Extract the token from Authorization header
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		utils.HandleError(ctx, http.StatusBadRequest, "missing authorization header", "authorization header is required")
+		return
+	}
+
+	// Remove "Bearer " prefix
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenString == authHeader {
+		utils.HandleError(ctx, http.StatusBadRequest, "invalid authorization format", "authorization header must be in format 'Bearer <token>'")
+		return
+	}
+
+	// Get claims from context (set by middleware)
+	claims, exists := ctx.Get("claims")
+	if !exists {
+		utils.HandleError(ctx, http.StatusUnauthorized, "unauthorized", "token claims not found")
+		return
+	}
+
+	userClaims, ok := claims.(pkg.Claims)
+	if !ok {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot cast claims")
+		return
+	}
+
+	// Calculate remaining TTL for the token
+	// Assuming your JWT has an expiration time
+	// expirationTime := time.Unix(userClaims.ExpiresAt, 0)
+	expirationTime := time.Unix(userClaims.ExpiresAt.Unix(), 0)
+	remainingTTL := time.Until(expirationTime)
+
+	// Only blacklist if token hasn't expired yet
+	if remainingTTL > 0 {
+		if err := u.authCache.BlacklistToken(ctx.Request.Context(), tokenString, remainingTTL); err != nil {
+			utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "failed to logout")
+			return
+		}
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data: map[string]interface{}{
+			"message": "Logout successful",
+		},
 	})
 }
 
