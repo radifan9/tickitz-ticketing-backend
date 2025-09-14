@@ -87,7 +87,6 @@ func (m *MovieRepository) fetchUpcomingMoviesFromDB(ctx context.Context) ([]mode
 	defer rows.Close()
 
 	var movies []models.Movie
-
 	// Read rows/records
 	for rows.Next() {
 		var movie models.Movie

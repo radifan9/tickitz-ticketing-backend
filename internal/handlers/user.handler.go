@@ -31,17 +31,13 @@ func NewUserHandler(ur *repositories.UserRepository, rdb *redis.Client) *UserHan
 	}
 }
 
-// Register
-// @Summary      Register a new user
-// @Description  Create a user account with email and password
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        payload  body      models.RegisterUser  true  "Register payload"
-// @Success      201      {object}  map[string]interface{}  "Created user id and email"
-// @Failure      400      {object}  map[string]string      "Bad request"
-// @Failure      500      {object}  map[string]string      "Internal server error"
-// @Router       /api/v1/register [post]
+// @Summary Register a new user
+// @Tags    Auth
+// @Accept  json
+// @Produce json
+// @Param   body body models.RegisterUser true "User registration"
+// @Success 201 {object} models.User
+// @Router  /api/v1/auth/register [post]
 func (u *UserHandler) Register(ctx *gin.Context) {
 	var user models.RegisterUser
 	if err := ctx.ShouldBind(&user); err != nil {
@@ -78,6 +74,13 @@ func (u *UserHandler) Register(ctx *gin.Context) {
 	})
 }
 
+// @Summary User login
+// @Tags    Auth
+// @Accept  json
+// @Produce json
+// @Param   body body models.User true "Login credentials"
+// @Success 200 {object} map[string]string "JWT token"
+// @Router  /api/v1/auth/login [post]
 func (u *UserHandler) Login(ctx *gin.Context) {
 	var user models.User
 	if err := ctx.ShouldBind(&user); err != nil {
@@ -153,7 +156,12 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	})
 }
 
-// User Logout
+// @Summary User logout
+// @Tags    Auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]string "Logout successful"
+// @Router  /api/v1/auth/logout [delete]
 func (u *UserHandler) Logout(ctx *gin.Context) {
 	// Extract the token from Authorization header
 	authHeader := ctx.GetHeader("Authorization")
@@ -206,8 +214,12 @@ func (u *UserHandler) Logout(ctx *gin.Context) {
 	})
 }
 
-// GetProfileByUserID handles GET /users/:user_id/profile
-// It fetches the user's profile from the repository and returns it as JSON
+// @Summary Get user profile
+// @Tags    Users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} models.UserProfile
+// @Router  /api/v1/users/profile [get]
 func (u *UserHandler) GetProfile(ctx *gin.Context) {
 	// Get the userID from token
 	claims, _ := ctx.Get("claims")
@@ -231,6 +243,17 @@ func (u *UserHandler) GetProfile(ctx *gin.Context) {
 
 }
 
+// @Summary Edit user profile
+// @Tags    Users
+// @Accept  multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param   first_name formData string false "First name"
+// @Param   last_name formData string false "Last name"
+// @Param   phone_number formData string false "Phone number"
+// @Param   img formData file false "Profile image"
+// @Success 200 {object} models.UserProfile
+// @Router  /api/v1/users/profile [patch]
 func (u *UserHandler) EditProfile(ctx *gin.Context) {
 	// Get image from form-data
 	var body models.EditUserProfile
@@ -248,32 +271,78 @@ func (u *UserHandler) EditProfile(ctx *gin.Context) {
 	}
 
 	// Storing image process
+	// file := body.Img
+	// ext := filepath.Ext(file.Filename)
+	// re := regexp.MustCompile("(png|jpg|jpeg|webp)$")
+	// if !re.Match([]byte(ext)) {
+	// 	// Abort upload
+	// }
+	// filename := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), user.UserId, ext)
+	// location := filepath.Join("public", filename)
+	// if err := ctx.SaveUploadedFile(file, location); err != nil {
+	// 	utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
+	// 	return
+	// }
+
+	// editedProfile, err := u.ur.EditProfile(ctx.Request.Context(), user.UserId, body, location)
+	// if err != nil {
+	// 	utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot edited user profile")
+	// 	return
+	// }
+
+	// utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+	// 	Success: true,
+	// 	Status:  http.StatusOK,
+	// 	Data:    editedProfile,
+	// })
+
 	file := body.Img
-	ext := filepath.Ext(file.Filename)
-	re := regexp.MustCompile("(png|jpg|jpeg|webp)$")
-	if !re.Match([]byte(ext)) {
-		// Abort upload
-	}
-	filename := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), user.UserId, ext)
-	location := filepath.Join("public", filename)
-	if err := ctx.SaveUploadedFile(file, location); err != nil {
-		utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
+	if file != nil {
+		ext := filepath.Ext(file.Filename)
+		re := regexp.MustCompile(`(?i)\.(png|jpg|jpeg|webp)$`)
+		if !re.MatchString(ext) {
+			utils.HandleError(ctx, http.StatusBadRequest, "invalid file type", "only png, jpg, jpeg, webp allowed")
+			return
+		}
+
+		filename := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), user.UserId, ext)
+		location := filepath.Join("public", filename)
+
+		if err := ctx.SaveUploadedFile(file, location); err != nil {
+			utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
+			return
+		}
+
+		// Update profile with new image
+		editedProfile, err := u.ur.EditProfile(ctx.Request.Context(), user.UserId, body, location)
+		if err != nil {
+			utils.HandleError(ctx, http.StatusInternalServerError, err.Error(), "cannot edit user profile")
+			return
+		}
+
+		utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{Success: true, Status: http.StatusOK, Data: editedProfile})
 		return
 	}
 
-	editedProfile, err := u.ur.EditProfile(ctx.Request.Context(), user.UserId, body, location)
+	// If no image uploaded, just update profile without image
+	editedProfile, err := u.ur.EditProfile(ctx.Request.Context(), user.UserId, body, "")
 	if err != nil {
-		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot edited user profile")
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot edit user profile")
 		return
 	}
 
-	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
-		Success: true,
-		Status:  http.StatusOK,
-		Data:    editedProfile,
-	})
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{Success: true, Status: http.StatusOK, Data: editedProfile})
+
 }
 
+// @Summary Change user password
+// @Tags    Users
+// @Accept  json
+// @Produce json
+// @Security BearerAuth
+// @Param   body body models.ChangePasswordRequest true "Password change"
+// @Success 200 {object} map[string]string "Password changed"
+// @Router  /api/v1/users/password [patch]
 func (u *UserHandler) ChangePassword(ctx *gin.Context) {
 	var req models.ChangePasswordRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {

@@ -21,6 +21,11 @@ func NewMovieHandler(mr *repositories.MovieRepository) *MovieHandler {
 	return &MovieHandler{mr: mr}
 }
 
+// @Summary Get upcoming movies
+// @Tags    Movies
+// @Produce json
+// @Success 200 {object} models.SuccessResponse
+// @Router  /api/v1/movies/upcoming [get]
 func (m *MovieHandler) ListUpcomingMovies(ctx *gin.Context) {
 	upcomingMovies, err := m.mr.ListUpcomingMovies(ctx)
 	if err != nil {
@@ -35,6 +40,11 @@ func (m *MovieHandler) ListUpcomingMovies(ctx *gin.Context) {
 	})
 }
 
+// @Summary Get popular movies
+// @Tags    Movies
+// @Produce json
+// @Success 200 {object} models.SuccessResponse
+// @Router  /api/v1/movies/popular [get]
 func (m *MovieHandler) ListPopularMovies(ctx *gin.Context) {
 	popularMovies, err := m.mr.ListPopularMovies(ctx)
 	if err != nil {
@@ -49,6 +59,14 @@ func (m *MovieHandler) ListPopularMovies(ctx *gin.Context) {
 	})
 }
 
+// @Summary Get filtered movies
+// @Tags    Movies
+// @Produce json
+// @Param   keywords query string false "Comma-separated keywords"
+// @Param   genres   query string false "Comma-separated genre IDs"
+// @Param   page     query int    false "Page number"
+// @Success 200 {object} models.SuccessResponse
+// @Router  /api/v1/movies/ [get]
 func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 	keywordParam := ctx.Query("keywords")
 	genreParam := ctx.Query("genres")
@@ -106,7 +124,12 @@ func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 	})
 }
 
-// --- Get Movie Details
+// @Summary Get movie details
+// @Tags    Movies
+// @Produce json
+// @Param   id path string true "Movie ID"
+// @Success 200 {object} models.SuccessResponse
+// @Router  /api/v1/movies/{id} [get]
 func (m *MovieHandler) GetMovieDetails(ctx *gin.Context) {
 	movieID := ctx.Param("id")
 
@@ -128,7 +151,12 @@ func (m *MovieHandler) GetMovieDetails(ctx *gin.Context) {
 	})
 }
 
-// (Admin) List All Movies
+// @Summary List all movies (admin)
+// @Tags    Admin
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} models.SuccessResponse
+// @Router  /api/v1/admin/movies [get]
 func (m *MovieHandler) ListAllMovies(ctx *gin.Context) {
 	allMovies, err := m.mr.ListAllMovies(ctx)
 	if err != nil {
@@ -147,8 +175,13 @@ func (m *MovieHandler) ListAllMovies(ctx *gin.Context) {
 	})
 }
 
-// --- Admin
-
+// @Summary Archive movie by ID (admin)
+// @Tags    Admin
+// @Produce json
+// @Security BearerAuth
+// @Param   id path string true "Movie ID"
+// @Success 200 {object} models.SuccessResponse
+// @Router  /api/v1/admin/movies/{id}/archive [delete]
 func (m *MovieHandler) ArchiveMovieByID(ctx *gin.Context) {
 	movieId := ctx.Param("id")
 
@@ -167,6 +200,14 @@ func (m *MovieHandler) ArchiveMovieByID(ctx *gin.Context) {
 	})
 }
 
+// @Summary Create a new movie (admin)
+// @Tags    Admin
+// @Accept  json
+// @Produce json
+// @Security BearerAuth
+// @Param   body body models.CreateMovie true "Movie data"
+// @Success 200 {object} models.SuccessResponse
+// @Router  /api/v1/admin/movies [post]
 func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 	var body models.CreateMovie
 	if err := ctx.ShouldBind(&body); err != nil {

@@ -6,11 +6,37 @@
         "contact": {},
         "version": "1.0"
     },
-    "basePath": "/",
+    "basePath": "/api/v1",
     "paths": {
-        "/api/v1/register": {
+        "/api/v1/admin/movies": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "List all movies (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    }
+                }
+            },
             "post": {
-                "description": "Create a user account with email and password",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -18,39 +44,89 @@
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Admin"
                 ],
-                "summary": "Register a new user",
+                "summary": "Create a new movie (admin)",
                 "parameters": [
                     {
-                        "description": "Register payload",
-                        "name": "payload",
+                        "description": "Movie data",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.RegisterUser"
+                            "$ref": "#/definitions/models.CreateMovie"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created user id and email",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.SuccessResponse"
                         }
-                    },
-                    "400": {
-                        "description": "Bad request",
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/movies/{id}/archive": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Archive movie by ID (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Movie ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/models.SuccessResponse"
                         }
-                    },
-                    "500": {
-                        "description": "Internal server error",
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "User login",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JWT token",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -60,9 +136,351 @@
                     }
                 }
             }
+        },
+        "/api/v1/auth/logout": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "User logout",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "User registration",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.RegisterUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/movies/": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Movies"
+                ],
+                "summary": "Get filtered movies",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma-separated keywords",
+                        "name": "keywords",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated genre IDs",
+                        "name": "genres",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/movies/popular": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Movies"
+                ],
+                "summary": "Get popular movies",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/movies/upcoming": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Movies"
+                ],
+                "summary": "Get upcoming movies",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/movies/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Movies"
+                ],
+                "summary": "Get movie details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Movie ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/password": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Change user password",
+                "parameters": [
+                    {
+                        "description": "Password change",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password changed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserProfile"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Edit user profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "First name",
+                        "name": "first_name",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Last name",
+                        "name": "last_name",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Phone number",
+                        "name": "phone_number",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Profile image",
+                        "name": "img",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserProfile"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "models.ChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "old_password"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "example": "NewP@ss456!"
+                },
+                "old_password": {
+                    "type": "string",
+                    "example": "OldP@ss123"
+                }
+            }
+        },
+        "models.CreateMovie": {
+            "type": "object",
+            "properties": {
+                "age_rating_id": {
+                    "type": "integer"
+                },
+                "backdrop_img": {
+                    "type": "string"
+                },
+                "cast": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "director": {
+                    "type": "string"
+                },
+                "duration_minutes": {
+                    "type": "integer"
+                },
+                "genres": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "poster_img": {
+                    "type": "string"
+                },
+                "release_date": {
+                    "type": "string"
+                },
+                "synopsis": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "models.RegisterUser": {
             "type": "object",
             "properties": {
@@ -75,6 +493,73 @@
                     "example": "Str0ngP@ss!"
                 }
             }
+        },
+        "models.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "status": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserProfile": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "img": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

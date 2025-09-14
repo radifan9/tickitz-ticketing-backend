@@ -1,5 +1,46 @@
-basePath: /
+basePath: /api/v1
 definitions:
+  models.ChangePasswordRequest:
+    properties:
+      new_password:
+        example: NewP@ss456!
+        type: string
+      old_password:
+        example: OldP@ss123
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  models.CreateMovie:
+    properties:
+      age_rating_id:
+        type: integer
+      backdrop_img:
+        type: string
+      cast:
+        items:
+          type: string
+        type: array
+      director:
+        type: string
+      duration_minutes:
+        type: integer
+      genres:
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      poster_img:
+        type: string
+      release_date:
+        type: string
+      synopsis:
+        type: string
+      title:
+        type: string
+    type: object
   models.RegisterUser:
     properties:
       email:
@@ -9,21 +50,155 @@ definitions:
         example: Str0ngP@ss!
         type: string
     type: object
+  models.SuccessResponse:
+    properties:
+      data: {}
+      status:
+        example: 200
+        type: integer
+      success:
+        example: true
+        type: boolean
+    type: object
+  models.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+    type: object
+  models.UserProfile:
+    properties:
+      created_at:
+        type: string
+      first_name:
+        type: string
+      img:
+        type: string
+      last_name:
+        type: string
+      phone_number:
+        type: string
+      points:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
 info:
   contact: {}
   description: RESTful API created using gin gonic
   title: Ticktiz Ticketing
   version: "1.0"
 paths:
-  /api/v1/register:
+  /api/v1/admin/movies:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+      security:
+      - BearerAuth: []
+      summary: List all movies (admin)
+      tags:
+      - Admin
     post:
       consumes:
       - application/json
-      description: Create a user account with email and password
       parameters:
-      - description: Register payload
+      - description: Movie data
         in: body
-        name: payload
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateMovie'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new movie (admin)
+      tags:
+      - Admin
+  /api/v1/admin/movies/{id}/archive:
+    delete:
+      parameters:
+      - description: Movie ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+      security:
+      - BearerAuth: []
+      summary: Archive movie by ID (admin)
+      tags:
+      - Admin
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - Auth
+  /api/v1/auth/logout:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: User logout
+      tags:
+      - Auth
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User registration
+        in: body
+        name: body
         required: true
         schema:
           $ref: '#/definitions/models.RegisterUser'
@@ -31,23 +206,153 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created user id and email
+          description: Created
           schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/models.User'
       summary: Register a new user
       tags:
-      - auth
+      - Auth
+  /api/v1/movies/:
+    get:
+      parameters:
+      - description: Comma-separated keywords
+        in: query
+        name: keywords
+        type: string
+      - description: Comma-separated genre IDs
+        in: query
+        name: genres
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+      summary: Get filtered movies
+      tags:
+      - Movies
+  /api/v1/movies/{id}:
+    get:
+      parameters:
+      - description: Movie ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+      summary: Get movie details
+      tags:
+      - Movies
+  /api/v1/movies/popular:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+      summary: Get popular movies
+      tags:
+      - Movies
+  /api/v1/movies/upcoming:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+      summary: Get upcoming movies
+      tags:
+      - Movies
+  /api/v1/users/password:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Password change
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password changed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change user password
+      tags:
+      - Users
+  /api/v1/users/profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserProfile'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Users
+    patch:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: First name
+        in: formData
+        name: first_name
+        type: string
+      - description: Last name
+        in: formData
+        name: last_name
+        type: string
+      - description: Phone number
+        in: formData
+        name: phone_number
+        type: string
+      - description: Profile image
+        in: formData
+        name: img
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserProfile'
+      security:
+      - BearerAuth: []
+      summary: Edit user profile
+      tags:
+      - Users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

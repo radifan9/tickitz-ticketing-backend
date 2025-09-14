@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
 	"github.com/redis/go-redis/v9"
@@ -23,13 +25,56 @@ func NewUserRepository(db *pgxpool.Pool, rdb *redis.Client) *UserRepository {
 }
 
 func (u *UserRepository) CreateUser(ctx context.Context, email, hashedPassword string) (models.User, error) {
+	// Begin transaction
+	tx, err := u.db.Begin(ctx)
+	if err != nil {
+		return models.User{}, err
+	}
+	defer func() {
+		if err != nil {
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				log.Println("failed to rollback transaction: ", rollbackErr)
+			}
+		}
+	}()
+
+	// Step 1: Create user
+
 	query := `INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id, email`
 	var user models.User
 
 	if err := u.db.QueryRow(ctx, query, email, hashedPassword).Scan(&user.Id, &user.Email); err != nil {
 		return models.User{}, fmt.Errorf("failed to register user: %w", err)
 	}
+
+	// Step 2: Create Profile
+	var profileID string
+	profileID, err = u.createProfile(ctx, tx, user.Id)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	log.Println("profile, userID : ", profileID)
+
+	// Commit transaction if everything succeeds
+	if err = tx.Commit(ctx); err != nil {
+		return models.User{}, err
+	}
+
 	return user, nil
+}
+
+func (u *UserRepository) createProfile(ctx context.Context, tx pgx.Tx, userID string) (string, error) {
+	query := `
+		insert into user_profiles (user_id) values ($1) returning user_id`
+
+	var id string
+	err := tx.QueryRow(ctx, query, userID).Scan(&id)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
 
 func (u *UserRepository) GetIDFromEmail(ctx context.Context, email string) (models.User, error) {
@@ -104,7 +149,19 @@ func (u *UserRepository) EditProfile(ctx context.Context, userID string, body mo
 		values = append(values, imagePath)
 	}
 
-	sql += fmt.Sprintf("updated_at=CURRENT_TIMESTAMP WHERE user_id=$%d RETURNING user_id, first_name, last_name, img, phone_number, points, created_at, updated_at", len(values)+1)
+	// sql += fmt.Sprintf("updated_at=CURRENT_TIMESTAMP WHERE user_id=$%d RETURNING user_id, first_name, last_name, img, phone_number, points, created_at, updated_at", len(values)+1)
+	sql += fmt.Sprintf(`updated_at=CURRENT_TIMESTAMP 
+    WHERE user_id=$%d 
+    RETURNING 
+        user_id, 
+        COALESCE(first_name, ''), 
+        COALESCE(last_name, ''), 
+        COALESCE(img, ''), 
+        COALESCE(phone_number, ''), 
+        COALESCE(points, 0), 
+        created_at, 
+        updated_at`, len(values)+1)
+
 	values = append(values, userID)
 
 	var profile models.UserProfile
