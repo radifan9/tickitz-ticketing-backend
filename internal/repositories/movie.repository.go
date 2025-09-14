@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/utils"
@@ -452,6 +453,215 @@ func (m *MovieRepository) ListAllMovies(ctx context.Context) ([]models.Movie, er
 	return movies, nil
 }
 
-// func (m *MovieRepository) CreateMovie(ctx context.Context) (models.Movie, error) {
+func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMovie) (models.CreateMovie, error) {
+	// Begin transaction
+	tx, err := m.db.Begin(ctx)
+	if err != nil {
+		return models.CreateMovie{}, err
+	}
+	defer func() {
+		if err != nil {
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				log.Println("failed to rollback transaction: ", rollbackErr)
+			}
+		}
+	}()
 
-// }
+	// --- --- Step 1: Insert Genres and get their IDs
+	var insertedGenreIDs []int
+	if len(movie.Genres) > 0 {
+		insertedGenreIDs, err = m.insertGenres(ctx, tx, movie.Genres)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+	}
+
+	log.Println("inserted genre IDs : ", insertedGenreIDs)
+
+	// --- --- Step 2: Actors and Director into People
+	var insertedCastIDs []int
+	if len(movie.Cast) > 0 {
+		insertedCastIDs, err = m.insertPeople(ctx, tx, movie.Cast)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+	}
+	log.Println("inserted cast IDs : ", insertedCastIDs)
+
+	var insertedDirectorID int
+	if len(movie.Director) > 0 {
+		insertedDirectorID, err = m.insertDirector(ctx, tx, movie.Director)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+	}
+	log.Println("inserted director ID : ", insertedDirectorID)
+
+	// --- --- Step 3: Create a new movie
+	var newMovieID int
+	newMovieID, err = m.insertMovie(ctx, tx, movie, insertedDirectorID)
+	log.Println("new movie ID : ", newMovieID)
+
+	// --- --- Step 4: Insert Movie_Genres
+	if len(insertedGenreIDs) > 0 {
+		err = m.insertMovieGenres(ctx, tx, newMovieID, insertedGenreIDs)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+	}
+
+	// --- --- Step 5: Insert Movie_Actors
+	if len(insertedCastIDs) > 0 {
+		err = m.insertMovieActors(ctx, tx, newMovieID, insertedCastIDs)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+	}
+
+	// (BELUM) Masukkan ke schedule
+
+	// Commit transaction if everything succeeds
+	if err = tx.Commit(ctx); err != nil {
+		return models.CreateMovie{}, err
+	}
+
+	return models.CreateMovie{ID: newMovieID}, nil
+}
+
+func (m *MovieRepository) insertGenres(ctx context.Context, tx pgx.Tx, genres []string) ([]int, error) {
+	if len(genres) == 0 {
+		return []int{}, nil
+	}
+
+	var insertedGenreIDs []int
+
+	for _, g := range genres {
+		query := `
+		WITH ins AS (
+			INSERT INTO genres (name)
+			VALUES ($1)
+			ON CONFLICT (name) DO NOTHING
+			RETURNING id
+		)
+		SELECT id FROM ins
+		UNION
+		SELECT id FROM genres WHERE name = $1;
+		`
+
+		var id int
+		err := tx.QueryRow(ctx, query, g).Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		insertedGenreIDs = append(insertedGenreIDs, id)
+	}
+
+	return insertedGenreIDs, nil
+}
+
+func (m *MovieRepository) insertPeople(ctx context.Context, tx pgx.Tx, people []string) ([]int, error) {
+	if len(people) == 0 {
+		return []int{}, nil
+	}
+
+	var insertedPeopleIDs []int
+
+	for _, g := range people {
+		query := `
+		WITH ins AS (
+			INSERT INTO people (name)
+			VALUES ($1)
+			ON CONFLICT (name) DO NOTHING
+			RETURNING id
+		)
+		SELECT id FROM ins
+		UNION
+		SELECT id FROM people WHERE name = $1;
+		`
+
+		var id int
+		err := tx.QueryRow(ctx, query, g).Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		insertedPeopleIDs = append(insertedPeopleIDs, id)
+	}
+
+	return insertedPeopleIDs, nil
+}
+
+func (m *MovieRepository) insertDirector(ctx context.Context, tx pgx.Tx, director string) (int, error) {
+	var insertedDirectorID int
+
+	query := `
+		WITH ins AS (
+			INSERT INTO people (name)
+			VALUES ($1)
+			ON CONFLICT (name) DO NOTHING
+			RETURNING id
+		)
+		SELECT id FROM ins
+		UNION
+		SELECT id FROM people WHERE name = $1;
+		`
+
+	err := tx.QueryRow(ctx, query, director).Scan(&insertedDirectorID)
+	if err != nil {
+		return 0, err
+	}
+
+	return insertedDirectorID, nil
+}
+
+func (m *MovieRepository) insertMovie(ctx context.Context, tx pgx.Tx, body models.CreateMovie, directorID int) (int, error) {
+	var insertedMovieID int
+
+	query := `
+		insert into movies (title, synopsis, poster_img, backdrop_img, duration_minutes, release_date, director_id, age_rating_id) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`
+
+	err := tx.QueryRow(ctx, query, body.Title, body.Synopsis, body.PosterImg, body.BackdropImg, body.DurationMinutes, body.ReleaseDate, directorID, body.AgeRating).Scan(&insertedMovieID)
+	if err != nil {
+		return 0, err
+	}
+
+	return insertedMovieID, nil
+}
+
+func (m *MovieRepository) insertMovieGenres(ctx context.Context, tx pgx.Tx, movieID int, genres []int) error {
+	if len(genres) == 0 {
+		return nil
+	}
+
+	// Build the bulk insert query
+	query := `
+		INSERT INTO movie_genres (movie_id, genre_id)
+		SELECT $1, UNNEST($2::int[])
+		ON CONFLICT DO NOTHING;
+	`
+
+	_, err := tx.Exec(ctx, query, movieID, genres)
+	if err != nil {
+		return fmt.Errorf("failed to insert movie_genres: %w", err)
+	}
+
+	return nil
+}
+
+func (m *MovieRepository) insertMovieActors(ctx context.Context, tx pgx.Tx, movieID int, actorIDs []int) error {
+	if len(actorIDs) == 0 {
+		return nil
+	}
+
+	query := `
+		INSERT INTO movie_actors (movie_id, actor_id)
+		SELECT $1, UNNEST($2::int[])
+		ON CONFLICT DO NOTHING;
+	`
+
+	_, err := tx.Exec(ctx, query, movieID, actorIDs)
+	if err != nil {
+		return fmt.Errorf("failed to insert movie_actors: %w", err)
+	}
+
+	return nil
+}

@@ -106,24 +106,6 @@ func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 	})
 }
 
-func (m *MovieHandler) ArchiveMovieByID(ctx *gin.Context) {
-	movieId := ctx.Param("id")
-
-	archievedMovieId, err := m.mr.ArchiveMovieByID(ctx, movieId)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"body":    0,
-		})
-	}
-
-	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
-		Success: true,
-		Status:  http.StatusOK,
-		Data:    archievedMovieId,
-	})
-}
-
 // --- Get Movie Details
 func (m *MovieHandler) GetMovieDetails(ctx *gin.Context) {
 	movieID := ctx.Param("id")
@@ -162,5 +144,45 @@ func (m *MovieHandler) ListAllMovies(ctx *gin.Context) {
 		Success: true,
 		Status:  http.StatusOK,
 		Data:    allMovies,
+	})
+}
+
+// --- Admin
+
+func (m *MovieHandler) ArchiveMovieByID(ctx *gin.Context) {
+	movieId := ctx.Param("id")
+
+	archievedMovieId, err := m.mr.ArchiveMovieByID(ctx, movieId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"body":    0,
+		})
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    archievedMovieId,
+	})
+}
+
+func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
+	var body models.CreateMovie
+	if err := ctx.ShouldBind(&body); err != nil {
+		utils.HandleError(ctx, http.StatusBadRequest, "bad request", err.Error())
+		return
+	}
+
+	newM, err := m.mr.CreateMovie(ctx, body)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "status internal server error", err.Error())
+		return
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    newM,
 	})
 }
