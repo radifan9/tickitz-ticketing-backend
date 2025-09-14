@@ -1,0 +1,1 @@
+DROP TABLE public.age_ratings;
