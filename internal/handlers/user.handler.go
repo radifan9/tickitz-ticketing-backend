@@ -269,6 +269,7 @@ func (u *UserHandler) EditProfile(ctx *gin.Context) {
 		return
 	}
 
+	// Dari postman harus ambil gambar baru
 	file := body.Img
 	if file != nil {
 		ext := filepath.Ext(file.Filename)

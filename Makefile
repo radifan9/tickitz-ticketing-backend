@@ -11,7 +11,6 @@ migrate-up:
 
 insert-seed:
 	for file in $$(ls $(SEED_PATH)/*.sql | sort); do \
-		echo "Seeding $$file..."; \
 		psql "$(DBURL)" -f $$file; \
 	done
 

@@ -455,7 +455,7 @@ func (m *MovieRepository) ListAllMovies(ctx context.Context) ([]models.Movie, er
 	return movies, nil
 }
 
-func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMovie) (models.CreateMovie, error) {
+func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMovie, locationPoster string, locationBackdrop string) (models.CreateMovie, error) {
 	// Begin transaction
 	tx, err := m.db.Begin(ctx)
 	if err != nil {
@@ -504,7 +504,7 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 
 	// --- --- Step 3: Create a new movie
 	var newMovieID int
-	newMovieID, err = m.insertMovie(ctx, tx, movie, insertedDirectorID)
+	newMovieID, err = m.insertMovie(ctx, tx, movie, insertedDirectorID, locationPoster, locationBackdrop)
 	log.Println("new movie ID : ", newMovieID)
 
 	// --- --- Step 4: Insert Movie_Genres
@@ -543,7 +543,7 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 		}
 	}
 
-	return models.CreateMovie{ID: newMovieID}, nil
+	return models.CreateMovie{ID: newMovieID, Title: movie.Title, ReleaseDate: movie.ReleaseDate}, nil
 }
 
 func (m *MovieRepository) insertGenres(ctx context.Context, tx pgx.Tx, genres []string) ([]int, error) {
@@ -631,7 +631,7 @@ func (m *MovieRepository) insertDirector(ctx context.Context, tx pgx.Tx, directo
 	return insertedDirectorID, nil
 }
 
-func (m *MovieRepository) insertMovie(ctx context.Context, tx pgx.Tx, body models.CreateMovie, directorID int) (int, error) {
+func (m *MovieRepository) insertMovie(ctx context.Context, tx pgx.Tx, body models.CreateMovie, directorID int, locationPoster string, locationBackdrop string) (int, error) {
 	var insertedMovieID int
 
 	log.Println("title : ", body.Title)
@@ -646,7 +646,7 @@ func (m *MovieRepository) insertMovie(ctx context.Context, tx pgx.Tx, body model
 	query := `
 		insert into movies (title, synopsis, poster_img, backdrop_img, duration_minutes, release_date, director_id, age_rating_id) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`
 
-	err := tx.QueryRow(ctx, query, body.Title, body.Synopsis, body.PosterImg, body.BackdropImg, body.DurationMinutes, body.ReleaseDate, directorID, body.AgeRating).Scan(&insertedMovieID)
+	err := tx.QueryRow(ctx, query, body.Title, body.Synopsis, locationPoster, locationBackdrop, body.DurationMinutes, body.ReleaseDate, directorID, body.AgeRating).Scan(&insertedMovieID)
 	if err != nil {
 		log.Printf("insertMovie failed: %v", err)
 		return 0, err

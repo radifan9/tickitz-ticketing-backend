@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
@@ -215,12 +219,54 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 		return
 	}
 
-	newM, err := m.mr.CreateMovie(ctx, body)
+	// From postman must upload a new poster
+	filePoster := body.PosterImg
+	var locationPoster string
+
+	if filePoster != nil {
+		ext := filepath.Ext(filePoster.Filename)
+		re := regexp.MustCompile(`(?i)\.(png|jpg|jpeg|webp)$`)
+		if !re.MatchString(ext) {
+			utils.HandleError(ctx, http.StatusBadRequest, "invalid file type", "only png, jpg, jpeg, webp allowed")
+			return
+		}
+
+		filenamePoster := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), "userID", ext) // replace "userID"
+		locationPoster = filepath.Join("public", filenamePoster)
+
+		if err := ctx.SaveUploadedFile(filePoster, locationPoster); err != nil {
+			utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
+			return
+		}
+	}
+
+	fileBackdrop := body.BackdropImg
+	var locationBackdrop string
+
+	if fileBackdrop != nil {
+		ext := filepath.Ext(fileBackdrop.Filename)
+		re := regexp.MustCompile(`(?i)\.(png|jpg|jpeg|webp)$`)
+		if !re.MatchString(ext) {
+			utils.HandleError(ctx, http.StatusBadRequest, "invalid file type", "only png, jpg, jpeg, webp allowed")
+			return
+		}
+
+		filenamePoster := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), "userID", ext) // replace "userID"
+		locationBackdrop = filepath.Join("public", filenamePoster)
+
+		if err := ctx.SaveUploadedFile(fileBackdrop, locationBackdrop); err != nil {
+			utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
+			return
+		}
+	}
+
+	newM, err := m.mr.CreateMovie(ctx, body, locationPoster, locationBackdrop)
 	if err != nil {
 		utils.HandleError(ctx, http.StatusInternalServerError, "status internal server error", err.Error())
 		return
 	}
 
+	log.Println("Newly created movie : ", newM)
 	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
 		Success: true,
 		Status:  http.StatusOK,
