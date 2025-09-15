@@ -471,8 +471,10 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 
 	// --- --- Step 1: Insert Genres and get their IDs
 	var insertedGenreIDs []int
+	genreList := strings.Split(movie.Genres, ",")
+	log.Println("Splitted genre ", genreList)
 	if len(movie.Genres) > 0 {
-		insertedGenreIDs, err = m.insertGenres(ctx, tx, movie.Genres)
+		insertedGenreIDs, err = m.insertGenres(ctx, tx, genreList)
 		if err != nil {
 			log.Println("error inserting genres:", err)
 			return models.CreateMovie{}, err
@@ -483,8 +485,10 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 
 	// --- --- Step 2: Actors and Director into People
 	var insertedCastIDs []int
+	castList := strings.Split(movie.Cast, ",")
+	log.Println("cast : ", movie.Cast)
 	if len(movie.Cast) > 0 {
-		insertedCastIDs, err = m.insertPeople(ctx, tx, movie.Cast)
+		insertedCastIDs, err = m.insertPeople(ctx, tx, castList)
 		if err != nil {
 			log.Println("error inserting cast:", err)
 			return models.CreateMovie{}, err
@@ -636,8 +640,8 @@ func (m *MovieRepository) insertMovie(ctx context.Context, tx pgx.Tx, body model
 
 	log.Println("title : ", body.Title)
 	log.Println("synopsis : ", body.Synopsis)
-	log.Println("PosterImg : ", body.PosterImg)
-	log.Println("BackdropImg : ", body.BackdropImg)
+	// log.Println("PosterImg : ", body.PosterImg)
+	// log.Println("BackdropImg : ", body.BackdropImg)
 	log.Println("Duration : ", body.DurationMinutes)
 	log.Println("Release date : ", body.ReleaseDate)
 	log.Println("director ID : ", directorID)

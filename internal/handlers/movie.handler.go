@@ -221,6 +221,7 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 
 	// From postman must upload a new poster
 	filePoster := body.PosterImg
+	filenamePoster := ""
 	var locationPoster string
 
 	if filePoster != nil {
@@ -231,7 +232,7 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 			return
 		}
 
-		filenamePoster := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), "userID", ext) // replace "userID"
+		filenamePoster = fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), "userID", ext) // replace "userID"
 		locationPoster = filepath.Join("public", filenamePoster)
 
 		if err := ctx.SaveUploadedFile(filePoster, locationPoster); err != nil {
@@ -241,6 +242,7 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 	}
 
 	fileBackdrop := body.BackdropImg
+	filenameBackdrop := ""
 	var locationBackdrop string
 
 	if fileBackdrop != nil {
@@ -251,8 +253,8 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 			return
 		}
 
-		filenamePoster := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), "userID", ext) // replace "userID"
-		locationBackdrop = filepath.Join("public", filenamePoster)
+		filenameBackdrop = fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), "userID", ext) // replace "userID"
+		locationBackdrop = filepath.Join("public", filenameBackdrop)
 
 		if err := ctx.SaveUploadedFile(fileBackdrop, locationBackdrop); err != nil {
 			utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
@@ -260,7 +262,7 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 		}
 	}
 
-	newM, err := m.mr.CreateMovie(ctx, body, locationPoster, locationBackdrop)
+	newM, err := m.mr.CreateMovie(ctx, body, filenamePoster, filenameBackdrop)
 	if err != nil {
 		utils.HandleError(ctx, http.StatusInternalServerError, "status internal server error", err.Error())
 		return

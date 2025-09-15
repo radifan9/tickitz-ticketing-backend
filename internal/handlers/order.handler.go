@@ -21,6 +21,14 @@ func NewOrderHandler(or *repositories.OrderRepository) *OrderHandler {
 }
 
 // --- Method used in Payment Page, when user clicked "Check Payment"
+
+// AddTransaction godoc
+// @Summary Create a new transaction
+// @Tags Orders
+// @Accept json
+// @Produce json
+// @Router /orders/ [post]
+// @Security BearerAuth
 func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
 	// Get userID from token
 	claims, _ := ctx.Get("claims")
@@ -60,6 +68,13 @@ func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
 }
 
 // --- Method used in profile "Order History"
+
+// ListTransaction godoc
+// @Summary Get user transaction histories
+// @Tags Orders
+// @Produce json
+// @Router /orders/histories [get]
+// @Security BearerAuth
 func (o *OrderHandler) ListTransaction(ctx *gin.Context) {
 	// Get the userID from token
 	claims, _ := ctx.Get("claims")
