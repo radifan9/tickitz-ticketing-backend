@@ -59,7 +59,6 @@ func (u *UserHandler) Register(ctx *gin.Context) {
 		return
 	}
 
-	// @Summary 	User Login
 	newUser, err := u.ur.CreateUser(ctx, user.Email, hashedPassword)
 	if err != nil {
 		log.Println("error : ", err)
@@ -270,32 +269,6 @@ func (u *UserHandler) EditProfile(ctx *gin.Context) {
 		return
 	}
 
-	// Storing image process
-	// file := body.Img
-	// ext := filepath.Ext(file.Filename)
-	// re := regexp.MustCompile("(png|jpg|jpeg|webp)$")
-	// if !re.Match([]byte(ext)) {
-	// 	// Abort upload
-	// }
-	// filename := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), user.UserId, ext)
-	// location := filepath.Join("public", filename)
-	// if err := ctx.SaveUploadedFile(file, location); err != nil {
-	// 	utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
-	// 	return
-	// }
-
-	// editedProfile, err := u.ur.EditProfile(ctx.Request.Context(), user.UserId, body, location)
-	// if err != nil {
-	// 	utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot edited user profile")
-	// 	return
-	// }
-
-	// utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
-	// 	Success: true,
-	// 	Status:  http.StatusOK,
-	// 	Data:    editedProfile,
-	// })
-
 	file := body.Img
 	if file != nil {
 		ext := filepath.Ext(file.Filename)
@@ -345,7 +318,7 @@ func (u *UserHandler) EditProfile(ctx *gin.Context) {
 // @Router  /api/v1/users/password [patch]
 func (u *UserHandler) ChangePassword(ctx *gin.Context) {
 	var req models.ChangePasswordRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		utils.HandleError(ctx, http.StatusBadRequest, "bad request", err.Error())
 		return
 	}
@@ -355,6 +328,16 @@ func (u *UserHandler) ChangePassword(ctx *gin.Context) {
 	userClaims, ok := claims.(pkg.Claims)
 	if !ok {
 		utils.HandleError(ctx, http.StatusUnauthorized, "unauthorized", "invalid claims")
+		return
+	}
+
+	// Validate Password
+	// If there's no error in data-binding, validate the password
+	if err := utils.ValidatePassword(req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"success": false,
+		})
 		return
 	}
 
