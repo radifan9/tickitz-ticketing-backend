@@ -1,4 +1,6 @@
-INSERT INTO public.people (id,"name") VALUES
+INSERT INTO public.people (id,"name") 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 (1,'Christopher Nolan'),
 	 (2,'Frank Darabont'),
 	 (3,'Anthony Russo'),

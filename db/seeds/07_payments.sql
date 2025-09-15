@@ -1,4 +1,6 @@
-INSERT INTO public.payments (id,"method",img) VALUES
+INSERT INTO public.payments (id,"method",img) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 (1,'Google Pay','/google_pay.png'),
 	 (2,'Visa','/visa.png'),
 	 (3,'Gopay','/gopay.png'),

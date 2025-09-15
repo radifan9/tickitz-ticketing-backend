@@ -1,4 +1,6 @@
-INSERT INTO public.users (id,"role",email,"password",created_at,updated_at) VALUES
+INSERT INTO public.users (id,"role",email,"password",created_at,updated_at) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 ('e457d392-1876-45f3-847a-e693db85dc03'::uuid,'user'::public."role_type",'opet@gmail.com','$argon2id$v=19$m=65536,t=2,p=1$OMvylx6kRLCN7jomvbBdTw$r1exHPow1JotPGoe7s7+6/WUn0+DvHO7e7NkuXKJ2ys','2025-09-05 15:02:42.41456+07','2025-09-05 15:02:42.41456+07'),
 	 ('b90604b9-d7ad-477c-80f4-268d3e75f2d0'::uuid,'user'::public."role_type",'yusuf@gmail.com','$argon2id$v=19$m=65536,t=2,p=1$QY6pppYSY9cIahXISiYeMw$UIeA8LZ6hqZTacPmCkY7tfoBeaHmKPwsc8DAeqBaEd4','2025-09-07 10:32:08.45287+07','2025-09-07 10:32:08.45287+07'),
 	 ('b79c9aee-72b0-40ad-933e-2ac15fc2ea25'::uuid,'user'::public."role_type",'cegans@gmail.com','$argon2id$v=19$m=65536,t=2,p=1$+aXzBfXjDby2cfOFxx9XNw$OqSuJbqrJbkTDwNdqeJCIyObY+qnmDod4Kyzw1SA3QA','2025-09-07 10:37:33.38344+07','2025-09-07 10:37:33.38344+07'),

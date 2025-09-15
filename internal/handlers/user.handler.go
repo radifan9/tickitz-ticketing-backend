@@ -334,10 +334,7 @@ func (u *UserHandler) ChangePassword(ctx *gin.Context) {
 	// Validate Password
 	// If there's no error in data-binding, validate the password
 	if err := utils.ValidatePassword(req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error":   err.Error(),
-			"success": false,
-		})
+		utils.HandleError(ctx, http.StatusBadRequest, "bad request", err.Error())
 		return
 	}
 

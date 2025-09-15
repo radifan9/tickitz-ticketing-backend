@@ -1,1 +1,1 @@
-DROP TABLE public.genres (
+DROP TABLE public.genres;

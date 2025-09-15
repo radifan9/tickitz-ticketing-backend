@@ -1,4 +1,6 @@
-INSERT INTO public.transactions (id,user_id,payment_id,total_payment,full_name,email,phone_number,paid_at,created_at,updated_at,schedule_id,scanned_at) VALUES
+INSERT INTO public.transactions (id,user_id,payment_id,total_payment,full_name,email,phone_number,paid_at,created_at,updated_at,schedule_id,scanned_at) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 ('99872fed-3a03-4a4d-bb14-31bdeea1c3f8'::uuid,'e457d392-1876-45f3-847a-e693db85dc03'::uuid,2,10,'Federus Rudi','opet@gmail.com','08515511123','2025-09-08 11:43:14.304608+07','2025-09-08 11:43:14.304608+07','2025-09-08 11:43:14.304608+07',90,NULL),
 	 ('b1c77582-30dc-40f9-b253-0de5fd4fc20d'::uuid,'e457d392-1876-45f3-847a-e693db85dc03'::uuid,2,10,'Federus Rudi','opet@gmail.com','08515511123','2025-09-09 23:04:56.835644+07','2025-09-09 23:04:56.835644+07','2025-09-09 23:04:56.835644+07',90,NULL),
 	 ('2c03c3fe-67d2-4152-ae42-fbe737c3618d'::uuid,'e457d392-1876-45f3-847a-e693db85dc03'::uuid,2,10,'Federus Rudi','opet@gmail.com','08515511123','2025-09-09 23:05:42.826427+07','2025-09-09 23:05:42.826427+07','2025-09-09 23:05:42.826427+07',90,NULL),

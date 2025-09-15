@@ -1,4 +1,6 @@
-INSERT INTO public.transactions_seats (seats_id,transactions_id) VALUES
+INSERT INTO public.transactions_seats (seats_id,transactions_id) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 (361,'c07ca8d9-b1ef-4dd1-b3f8-6dc25d0f17d0'::uuid),
 	 (362,'c07ca8d9-b1ef-4dd1-b3f8-6dc25d0f17d0'::uuid),
 	 (363,'c07ca8d9-b1ef-4dd1-b3f8-6dc25d0f17d0'::uuid),

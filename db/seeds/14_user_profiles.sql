@@ -1,4 +1,6 @@
-INSERT INTO public.user_profiles (user_id,first_name,last_name,img,phone_number,points,created_at,updated_at) VALUES
+INSERT INTO public.user_profiles (user_id,first_name,last_name,img,phone_number,points,created_at,updated_at) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 ('0ce24129-fdc3-484c-b9e7-fac753aedde9'::uuid,'Radif','Aghnadiin','/1.png','081234567890',1000,'2025-09-08 09:31:43.858835+07','2025-09-08 09:31:43.858835+07'),
 	 ('b22fc030-8441-4d27-883a-c25b2a133f99'::uuid,'Sidik','Dik','/3.png','081234567892',200,'2025-09-08 09:31:43.858835+07','2025-09-08 09:31:43.858835+07'),
 	 ('b79c9aee-72b0-40ad-933e-2ac15fc2ea25'::uuid,'Cegans','Supra','/4.png','081234567893',75,'2025-09-08 09:31:43.858835+07','2025-09-08 09:31:43.858835+07'),

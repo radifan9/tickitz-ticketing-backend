@@ -1,4 +1,6 @@
-INSERT INTO public.genres (id,"name") VALUES
+INSERT INTO public.genres (id,"name") 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 (1,'Action'),
 	 (2,'Drama'),
 	 (3,'Crime'),

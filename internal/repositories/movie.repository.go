@@ -191,8 +191,11 @@ func (m *MovieRepository) ListMovieFiltered(
 	filter models.MovieFilter,
 ) ([]models.Movie, error) {
 
+	log.Println("filter keyword: ", filter.Keywords)
+	log.Println("filter genre: ", filter.Genres)
+
 	// Check if its the first page of all movies
-	if filter.Limit == 20 && filter.Offset == 0 {
+	if filter.Limit == 20 && filter.Offset == 0 && len(filter.Keywords) == 0 && len(filter.Genres) == 0 {
 
 		// If it's first page then try to get the cache
 		var movies []models.Movie
@@ -471,6 +474,7 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 	if len(movie.Genres) > 0 {
 		insertedGenreIDs, err = m.insertGenres(ctx, tx, movie.Genres)
 		if err != nil {
+			log.Println("error inserting genres:", err)
 			return models.CreateMovie{}, err
 		}
 	}
@@ -482,6 +486,7 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 	if len(movie.Cast) > 0 {
 		insertedCastIDs, err = m.insertPeople(ctx, tx, movie.Cast)
 		if err != nil {
+			log.Println("error inserting cast:", err)
 			return models.CreateMovie{}, err
 		}
 	}
@@ -491,6 +496,7 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 	if len(movie.Director) > 0 {
 		insertedDirectorID, err = m.insertDirector(ctx, tx, movie.Director)
 		if err != nil {
+			log.Println("error inserting director:", err)
 			return models.CreateMovie{}, err
 		}
 	}
@@ -505,6 +511,7 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 	if len(insertedGenreIDs) > 0 {
 		err = m.insertMovieGenres(ctx, tx, newMovieID, insertedGenreIDs)
 		if err != nil {
+			log.Println("error inserting movie:", err)
 			return models.CreateMovie{}, err
 		}
 	}
@@ -522,6 +529,18 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 	// Commit transaction if everything succeeds
 	if err = tx.Commit(ctx); err != nil {
 		return models.CreateMovie{}, err
+	}
+
+	keysToInvalidate := []string{
+		"tickitz:upcoming",
+		"tickitz:popular",
+		"tickitz:movies-all-first-page",
+	}
+
+	for _, k := range keysToInvalidate {
+		if delErr := m.rdb.Del(ctx, k).Err(); delErr != nil {
+			log.Printf("failed to invalidate cache for key %s: %v", k, delErr)
+		}
 	}
 
 	return models.CreateMovie{ID: newMovieID}, nil
@@ -615,11 +634,21 @@ func (m *MovieRepository) insertDirector(ctx context.Context, tx pgx.Tx, directo
 func (m *MovieRepository) insertMovie(ctx context.Context, tx pgx.Tx, body models.CreateMovie, directorID int) (int, error) {
 	var insertedMovieID int
 
+	log.Println("title : ", body.Title)
+	log.Println("synopsis : ", body.Synopsis)
+	log.Println("PosterImg : ", body.PosterImg)
+	log.Println("BackdropImg : ", body.BackdropImg)
+	log.Println("Duration : ", body.DurationMinutes)
+	log.Println("Release date : ", body.ReleaseDate)
+	log.Println("director ID : ", directorID)
+	log.Println("age rating ID : ", body.AgeRating)
+
 	query := `
 		insert into movies (title, synopsis, poster_img, backdrop_img, duration_minutes, release_date, director_id, age_rating_id) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`
 
 	err := tx.QueryRow(ctx, query, body.Title, body.Synopsis, body.PosterImg, body.BackdropImg, body.DurationMinutes, body.ReleaseDate, directorID, body.AgeRating).Scan(&insertedMovieID)
 	if err != nil {
+		log.Printf("insertMovie failed: %v", err)
 		return 0, err
 	}
 

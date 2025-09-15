@@ -1,4 +1,6 @@
-INSERT INTO public.movies (id,title,synopsis,poster_img,backdrop_img,duration_minutes,release_date,director_id,age_rating_id,created_at,updated_at,archived_at) VALUES
+INSERT INTO public.movies (id,title,synopsis,poster_img,backdrop_img,duration_minutes,release_date,director_id,age_rating_id,created_at,updated_at,archived_at) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 (4,'Avatar','A Marine on Pandora becomes torn between following orders and protecting his new home.','avatar.jpg','avatar_bg.jpg',162,'2009-12-18',4,1,'2025-09-07 13:20:29.219947+07','2025-09-07 13:20:29.219947+07',NULL),
 	 (5,'The Lord of the Rings: The Return of the King','The final confrontation against Sauron begins.','lotr.jpg','lotr_bg.jpg',201,'2003-12-17',5,2,'2025-09-07 13:20:29.219947+07','2025-09-07 13:20:29.219947+07',NULL),
 	 (6,'Dune: Part Two','Paul Atreides unites with the Fremen to wage war against House Harkonnen.','dune2.jpg','dune2_bg.jpg',165,'2025-11-14',6,NULL,'2025-09-07 13:27:51.554373+07','2025-09-07 13:27:51.554373+07',NULL),

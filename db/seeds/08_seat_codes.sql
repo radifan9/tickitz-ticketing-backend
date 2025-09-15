@@ -1,4 +1,6 @@
-INSERT INTO public.seat_codes (id,seat_code) VALUES
+INSERT INTO public.seat_codes (id,seat_code) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 (295,'A1'),
 	 (296,'A2'),
 	 (297,'A3'),
@@ -99,7 +101,9 @@ INSERT INTO public.seat_codes (id,seat_code) VALUES
 	 (392,'A2'),
 	 (393,'A3'),
 	 (394,'A1');
-INSERT INTO public.seat_codes (id,seat_code) VALUES
+INSERT INTO public.seat_codes (id,seat_code) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 (395,'A2'),
 	 (396,'A3'),
 	 (397,'A1'),

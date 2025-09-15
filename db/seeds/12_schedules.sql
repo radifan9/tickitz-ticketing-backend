@@ -1,4 +1,6 @@
-INSERT INTO public.schedules (id,movie_id,city_id,show_time_id,cinema_id,show_date) VALUES
+INSERT INTO public.schedules (id,movie_id,city_id,show_time_id,cinema_id,show_date) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 (31,4,2,3,1,'2025-08-08'),
 	 (32,7,5,2,2,'2025-08-09'),
 	 (33,1,1,1,3,'2025-08-09'),

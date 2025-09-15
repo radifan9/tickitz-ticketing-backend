@@ -1,4 +1,6 @@
-INSERT INTO public.movie_genres (movie_id,genre_id) VALUES
+INSERT INTO public.movie_genres (movie_id,genre_id) 
+OVERRIDING SYSTEM VALUE
+VALUES
 	 (1,1),
 	 (1,6),
 	 (1,7),
