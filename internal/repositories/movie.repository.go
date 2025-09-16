@@ -401,6 +401,17 @@ func (m *MovieRepository) ArchiveMovieByID(ctx context.Context, movieId string) 
 		return models.ArchiveMovieRespond{}, err
 	}
 
+	keysToInvalidate := []string{
+		"tickitz:upcoming",
+		"tickitz:popular",
+		"tickitz:movies-all-first-page",
+	}
+	for _, k := range keysToInvalidate {
+		if delErr := m.rdb.Del(ctx, k).Err(); delErr != nil {
+			log.Printf("failed to invalidate cache for key %s: %v", k, delErr)
+		}
+	}
+
 	return archivedMovie, nil
 }
 
@@ -540,7 +551,6 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 		"tickitz:popular",
 		"tickitz:movies-all-first-page",
 	}
-
 	for _, k := range keysToInvalidate {
 		if delErr := m.rdb.Del(ctx, k).Err(); delErr != nil {
 			log.Printf("failed to invalidate cache for key %s: %v", k, delErr)

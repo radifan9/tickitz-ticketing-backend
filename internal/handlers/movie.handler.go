@@ -232,7 +232,7 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 			return
 		}
 
-		filenamePoster = fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), "userID", ext) // replace "userID"
+		filenamePoster = fmt.Sprintf("%d_images_%s", time.Now().UnixNano(), ext) // replace "userID"
 		locationPoster = filepath.Join("public", filenamePoster)
 
 		if err := ctx.SaveUploadedFile(filePoster, locationPoster); err != nil {
@@ -253,7 +253,7 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 			return
 		}
 
-		filenameBackdrop = fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), "userID", ext) // replace "userID"
+		filenameBackdrop = fmt.Sprintf("%d_images_%s", time.Now().UnixNano(), ext) // replace "userID"
 		locationBackdrop = filepath.Join("public", filenameBackdrop)
 
 		if err := ctx.SaveUploadedFile(fileBackdrop, locationBackdrop); err != nil {

@@ -55,21 +55,24 @@ func (u *UserHandler) Register(ctx *gin.Context) {
 	hashCfg.UseRecommended()
 	hashedPassword, err := hashCfg.GenHash(user.Password)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
+		utils.HandleError(ctx, http.StatusInternalServerError, "failed to hash password", err.Error())
 		return
 	}
 
 	newUser, err := u.ur.CreateUser(ctx, user.Email, hashedPassword)
 	if err != nil {
 		log.Println("error : ", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to register"})
+		utils.HandleError(ctx, http.StatusConflict, "failed to register", err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
-		"id":    newUser.Id,
-		"email": newUser.Email,
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data: gin.H{
+			"id":    newUser.Id,
+			"email": newUser.Email,
+		},
 	})
 }
 

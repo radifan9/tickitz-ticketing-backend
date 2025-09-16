@@ -424,6 +424,43 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/orders/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Create a new transaction",
+                "responses": {}
+            }
+        },
+        "/orders/histories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Get user transaction histories",
+                "responses": {}
+            }
         }
     },
     "definitions": {
@@ -445,48 +482,7 @@ const docTemplate = `{
             }
         },
         "models.CreateMovie": {
-            "type": "object",
-            "properties": {
-                "age_rating_id": {
-                    "type": "integer"
-                },
-                "backdrop_img": {
-                    "type": "string"
-                },
-                "cast": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "director": {
-                    "type": "string"
-                },
-                "duration_minutes": {
-                    "type": "integer"
-                },
-                "genres": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "poster_img": {
-                    "type": "string"
-                },
-                "release_date": {
-                    "type": "string"
-                },
-                "synopsis": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
+            "type": "object"
         },
         "models.RegisterUser": {
             "type": "object",

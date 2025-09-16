@@ -13,33 +13,6 @@ definitions:
     - old_password
     type: object
   models.CreateMovie:
-    properties:
-      age_rating_id:
-        type: integer
-      backdrop_img:
-        type: string
-      cast:
-        items:
-          type: string
-        type: array
-      director:
-        type: string
-      duration_minutes:
-        type: integer
-      genres:
-        items:
-          type: string
-        type: array
-      id:
-        type: integer
-      poster_img:
-        type: string
-      release_date:
-        type: string
-      synopsis:
-        type: string
-      title:
-        type: string
     type: object
   models.RegisterUser:
     properties:
@@ -350,6 +323,28 @@ paths:
       summary: Edit user profile
       tags:
       - Users
+  /orders/:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Create a new transaction
+      tags:
+      - Orders
+  /orders/histories:
+    get:
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Get user transaction histories
+      tags:
+      - Orders
 securityDefinitions:
   BearerAuth:
     in: header
