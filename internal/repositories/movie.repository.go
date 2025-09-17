@@ -191,9 +191,6 @@ func (m *MovieRepository) ListMovieFiltered(
 	filter models.MovieFilter,
 ) ([]models.Movie, error) {
 
-	log.Println("filter keyword: ", filter.Keywords)
-	log.Println("filter genre: ", filter.Genres)
-
 	// Check if its the first page of all movies
 	if filter.Limit == 20 && filter.Offset == 0 && len(filter.Keywords) == 0 && len(filter.Genres) == 0 {
 
@@ -480,10 +477,9 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 		}
 	}()
 
-	// --- --- Step 1: Insert Genres and get their IDs
+	// Step 1: Insert Genres and get their IDs
 	var insertedGenreIDs []int
 	genreList := strings.Split(movie.Genres, ",")
-	log.Println("Splitted genre ", genreList)
 	if len(movie.Genres) > 0 {
 		insertedGenreIDs, err = m.insertGenres(ctx, tx, genreList)
 		if err != nil {
@@ -491,10 +487,9 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 			return models.CreateMovie{}, err
 		}
 	}
+	log.Println("Inserted genre IDs : ", insertedGenreIDs)
 
-	log.Println("inserted genre IDs : ", insertedGenreIDs)
-
-	// --- --- Step 2: Actors and Director into People
+	// Step 2: Actors and Director into People
 	var insertedCastIDs []int
 	castList := strings.Split(movie.Cast, ",")
 	log.Println("cast : ", movie.Cast)
@@ -505,7 +500,7 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 			return models.CreateMovie{}, err
 		}
 	}
-	log.Println("inserted cast IDs : ", insertedCastIDs)
+	log.Println("Inserted cast IDs : ", insertedCastIDs)
 
 	var insertedDirectorID int
 	if len(movie.Director) > 0 {
@@ -515,14 +510,14 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 			return models.CreateMovie{}, err
 		}
 	}
-	log.Println("inserted director ID : ", insertedDirectorID)
+	log.Println("Inserted director ID : ", insertedDirectorID)
 
-	// --- --- Step 3: Create a new movie
+	// Step 3: Create a new movie
 	var newMovieID int
 	newMovieID, err = m.insertMovie(ctx, tx, movie, insertedDirectorID, locationPoster, locationBackdrop)
 	log.Println("new movie ID : ", newMovieID)
 
-	// --- --- Step 4: Insert Movie_Genres
+	// Step 4: Insert Movie_Genres
 	if len(insertedGenreIDs) > 0 {
 		err = m.insertMovieGenres(ctx, tx, newMovieID, insertedGenreIDs)
 		if err != nil {
@@ -531,7 +526,7 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 		}
 	}
 
-	// --- --- Step 5: Insert Movie_Actors
+	// Step 5: Insert Movie_Actors
 	if len(insertedCastIDs) > 0 {
 		err = m.insertMovieActors(ctx, tx, newMovieID, insertedCastIDs)
 		if err != nil {
@@ -647,15 +642,6 @@ func (m *MovieRepository) insertDirector(ctx context.Context, tx pgx.Tx, directo
 
 func (m *MovieRepository) insertMovie(ctx context.Context, tx pgx.Tx, body models.CreateMovie, directorID int, locationPoster string, locationBackdrop string) (int, error) {
 	var insertedMovieID int
-
-	log.Println("title : ", body.Title)
-	log.Println("synopsis : ", body.Synopsis)
-	// log.Println("PosterImg : ", body.PosterImg)
-	// log.Println("BackdropImg : ", body.BackdropImg)
-	log.Println("Duration : ", body.DurationMinutes)
-	log.Println("Release date : ", body.ReleaseDate)
-	log.Println("director ID : ", directorID)
-	log.Println("age rating ID : ", body.AgeRating)
 
 	query := `
 		insert into movies (title, synopsis, poster_img, backdrop_img, duration_minutes, release_date, director_id, age_rating_id) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`

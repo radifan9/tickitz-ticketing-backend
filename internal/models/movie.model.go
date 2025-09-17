@@ -42,7 +42,7 @@ type CreateMovie struct {
 	PosterImg       *multipart.FileHeader `db:"poster_img" form:"poster_img" json:"poster_img,omitempty"`
 	BackdropImg     *multipart.FileHeader `db:"backdrop_img" form:"backdrop_img,omitempty" json:"backdrop_img,omitempty"`
 	DurationMinutes int                   `db:"duration_minutes" form:"duration_minutes,omitempty" json:"duration_minutes,omitempty"`
-	ReleaseDate     time.Time             `db:"release_date" form:"release_date" json:"release_date,omitempty"`
+	ReleaseDate     string                `db:"release_date" form:"release_date" json:"release_date,omitempty"`
 	Genres          string                `db:"genres" form:"genres" json:"genres,omitempty"`
 	Director        string                `db:"director" form:"director,omitempty" json:"director,omitempty"`
 	Cast            string                `db:"cast" form:"cast,omitempty" json:"cast,omitempty"`

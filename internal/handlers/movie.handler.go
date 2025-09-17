@@ -233,7 +233,7 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 		}
 
 		filenamePoster = fmt.Sprintf("%d_images_%s", time.Now().UnixNano(), ext) // replace "userID"
-		locationPoster = filepath.Join("public", filenamePoster)
+		locationPoster = filepath.Join("public/posters", filenamePoster)
 
 		if err := ctx.SaveUploadedFile(filePoster, locationPoster); err != nil {
 			utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
@@ -254,7 +254,7 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 		}
 
 		filenameBackdrop = fmt.Sprintf("%d_images_%s", time.Now().UnixNano(), ext) // replace "userID"
-		locationBackdrop = filepath.Join("public", filenameBackdrop)
+		locationBackdrop = filepath.Join("public/backdrops", filenameBackdrop)
 
 		if err := ctx.SaveUploadedFile(fileBackdrop, locationBackdrop); err != nil {
 			utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
