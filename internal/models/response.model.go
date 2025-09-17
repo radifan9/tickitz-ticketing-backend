@@ -6,6 +6,11 @@ type SuccessResponse struct {
 	Data    any  `json:"data"`
 }
 
+type SuccessLoginResponse struct {
+	Role  string `json:"role"`
+	Token string `json:"token"`
+}
+
 type ErrorResponse struct {
 	Success bool   `json:"success" example:"false"`
 	Status  int    `json:"status" example:"500"`

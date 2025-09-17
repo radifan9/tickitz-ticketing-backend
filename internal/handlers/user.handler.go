@@ -86,7 +86,7 @@ func (u *UserHandler) Register(ctx *gin.Context) {
 func (u *UserHandler) Login(ctx *gin.Context) {
 	var user models.User
 	if err := ctx.ShouldBind(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.HandleError(ctx, http.StatusBadRequest, "bad request", err.Error())
 		return
 	}
 
@@ -96,9 +96,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	// GetID from Database
 	infoUser, err := u.ur.GetIDFromEmail(ctx, user.Email)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		utils.HandleError(ctx, http.StatusBadRequest, "bad request", err.Error())
 		return
 	}
 
@@ -152,9 +150,14 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"token":   jwtToken,
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data: models.SuccessLoginResponse{
+			Role:  userCred.Role,
+			Token: jwtToken,
+		},
 	})
 }
 
