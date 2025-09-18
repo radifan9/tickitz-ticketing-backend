@@ -6,16 +6,18 @@ import (
 )
 
 type Movie struct {
-	ID              int       `db:"id" json:"id"`
-	Title           string    `db:"title" json:"title"`
-	Synopsis        string    `db:"synopsis" json:"synopsis,omitempty"`
-	PosterImg       string    `db:"poster_img" json:"poster_img"`
-	BackdropImg     string    `db:"backdrop_img" json:"backdrop_img,omitempty"`
-	DurationMinutes int       `db:"duration_minutes" json:"duration_minutes,omitempty"`
-	ReleaseDate     time.Time `db:"release_date" json:"release_date"`
-	Genres          []string  `db:"genres" json:"genres"`
-	Director        string    `db:"director" json:"director,omitempty"`
-	Cast            []string  `db:"cast" json:"cast,omitempty"`
+	ID              int        `db:"id" json:"id"`
+	Title           string     `db:"title" json:"title"`
+	Synopsis        string     `db:"synopsis" json:"synopsis,omitempty"`
+	PosterImg       string     `db:"poster_img" json:"poster_img"`
+	BackdropImg     string     `db:"backdrop_img" json:"backdrop_img,omitempty"`
+	DurationMinutes *int       `db:"duration_minutes" json:"duration_minutes,omitempty"`
+	ReleaseDate     *time.Time `db:"release_date" json:"release_date,omitempty"`
+	Genres          []string   `db:"genres" json:"genres"`
+	Director        string     `db:"director" json:"director,omitempty"`
+	Cast            []string   `db:"cast" json:"cast,omitempty"`
+	CreatedAt       time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time  `db:"updated_at" json:"updated_at"`
 }
 
 // type CreateMovie struct {

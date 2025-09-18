@@ -97,7 +97,7 @@ func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 	// If no page in param, then page = 0
 	page, _ := strconv.Atoi(pageParam)
 
-	// Set sensible defaults
+	// Set default
 	if page <= 0 {
 		page = 1
 	}
@@ -162,7 +162,22 @@ func (m *MovieHandler) GetMovieDetails(ctx *gin.Context) {
 // @Success 200 {object} models.SuccessResponse
 // @Router  /api/v1/admin/movies [get]
 func (m *MovieHandler) ListAllMovies(ctx *gin.Context) {
-	allMovies, err := m.mr.ListAllMovies(ctx)
+	pageParam := ctx.Query("page")
+
+	// Convert page
+	// If not page in param, then page = 0
+	page, _ := strconv.Atoi(pageParam)
+
+	// Set default
+	if page <= 0 {
+		page = 1
+	}
+
+	// Calculate limit & offset based on page
+	limit := 10
+	offset := (page - 1) * limit
+
+	allMovies, err := m.mr.ListAllMovies(ctx, offset)
 	if err != nil {
 		utils.HandleResponse(ctx, http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,

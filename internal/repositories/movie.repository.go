@@ -412,7 +412,7 @@ func (m *MovieRepository) ArchiveMovieByID(ctx context.Context, movieId string) 
 	return archivedMovie, nil
 }
 
-func (m *MovieRepository) ListAllMovies(ctx context.Context) ([]models.Movie, error) {
+func (m *MovieRepository) ListAllMovies(ctx context.Context, offset int) ([]models.Movie, error) {
 	// Query for getting movies list (admin)
 	query := `
 	SELECT
@@ -421,7 +421,9 @@ func (m *MovieRepository) ListAllMovies(ctx context.Context) ([]models.Movie, er
 		m.poster_img,
 		m.release_date,
 		ARRAY_AGG(DISTINCT g.name ORDER BY g.name) AS genres,
-		m.duration_minutes
+		m.duration_minutes,
+		m.created_at,
+		m.updated_at
 	FROM
 		movies m
 		JOIN movie_genres mg ON m.id = mg.movie_id
@@ -431,10 +433,12 @@ func (m *MovieRepository) ListAllMovies(ctx context.Context) ([]models.Movie, er
 		m.title,
 		m.poster_img,
 		m.release_date,
-		m.duration_minutes
-	ORDER BY m.release_date DESC
-	LIMIT 10 OFFSET 0;`
-	rows, err := m.db.Query(ctx, query)
+		m.duration_minutes,
+		m.created_at,
+		m.updated_at
+	ORDER BY m.updated_at DESC
+	LIMIT 10 OFFSET $1;`
+	rows, err := m.db.Query(ctx, query, offset)
 	if err != nil {
 		log.Println("internal server error : ", err.Error())
 		return []models.Movie{}, err
@@ -453,6 +457,8 @@ func (m *MovieRepository) ListAllMovies(ctx context.Context) ([]models.Movie, er
 			&movie.ReleaseDate,
 			&movie.Genres,
 			&movie.DurationMinutes,
+			&movie.CreatedAt,
+			&movie.UpdatedAt,
 		); err != nil {
 			log.Println("scan error, ", err.Error())
 			return []models.Movie{}, err
