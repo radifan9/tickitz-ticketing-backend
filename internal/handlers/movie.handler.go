@@ -233,6 +233,8 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 		utils.HandleError(ctx, http.StatusBadRequest, "bad request", err.Error())
 		return
 	}
+	log.Println("Body : ")
+	log.Println(body)
 
 	// From postman must upload a new poster
 	filePoster := body.PosterImg

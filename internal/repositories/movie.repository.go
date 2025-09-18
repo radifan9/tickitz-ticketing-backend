@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -32,7 +33,7 @@ func NewMovieRepository(db *pgxpool.Pool, rdb *redis.Client) *MovieRepository {
 	}
 }
 
-// --- List Upcoming Movies (not yet released current_date < release_dateI)
+// List Upcoming Movies (not yet released current_date < release_dateI)
 func (m *MovieRepository) ListUpcomingMovies(ctx context.Context) ([]models.Movie, error) {
 	var movies []models.Movie
 	redisKey := "tickitz:upcoming"
@@ -52,7 +53,7 @@ func (m *MovieRepository) ListUpcomingMovies(ctx context.Context) ([]models.Movi
 	return movies, err
 }
 
-// --- Fetching the Upcoming Movies
+// Fetching the Upcoming Movies
 func (m *MovieRepository) fetchUpcomingMoviesFromDB(ctx context.Context) ([]models.Movie, error) {
 	query := `
 		SELECT
@@ -331,10 +332,8 @@ func (m *MovieRepository) GetMovieDetails(ctx context.Context, movieId string) (
 				g.name
 		) as genres,
 
-		-- Director
 		d.name as director,
 
-		-- Casts
 		array_agg(
 			distinct a.name
 			order by
@@ -380,7 +379,7 @@ func (m *MovieRepository) GetMovieDetails(ctx context.Context, movieId string) (
 	return movieDetails, nil
 }
 
-// Archive a movie (delete)
+// (admin) Archive a movie (delete)
 func (m *MovieRepository) ArchiveMovieByID(ctx context.Context, movieId string) (models.ArchiveMovieRespond, error) {
 
 	// Query
@@ -412,6 +411,7 @@ func (m *MovieRepository) ArchiveMovieByID(ctx context.Context, movieId string) 
 	return archivedMovie, nil
 }
 
+// (admin)
 func (m *MovieRepository) ListAllMovies(ctx context.Context, offset int) ([]models.Movie, error) {
 	// Query for getting movies list (admin)
 	query := `
@@ -471,6 +471,7 @@ func (m *MovieRepository) ListAllMovies(ctx context.Context, offset int) ([]mode
 	return movies, nil
 }
 
+// (admin)
 func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMovie, locationPoster string, locationBackdrop string) (models.CreateMovie, error) {
 	// Begin transaction
 	tx, err := m.db.Begin(ctx)
@@ -542,7 +543,21 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 		}
 	}
 
-	// (BELUM) Masukkan ke schedule
+	// Step 6: Create schedules for 1 week from movie.ShowDate
+	cinemaList := strings.Split(movie.CinemaID, ",")
+	showTimeList := strings.Split(movie.ShowTimeID, ",")
+	cityList := strings.Split(movie.CityID, ",")
+
+	log.Println("Creating schedules...")
+	log.Println("cinemaList : ", cinemaList)
+	log.Println("show_date : ", movie.ShowDate)
+	log.Println("show_time_ids : ", showTimeList)
+
+	err = m.createSchedules(ctx, tx, newMovieID, movie.ShowDate, cinemaList, showTimeList, cityList)
+	if err != nil {
+		log.Println("error creating schedules:", err)
+		return models.CreateMovie{}, err
+	}
 
 	// Commit transaction if everything succeeds
 	if err = tx.Commit(ctx); err != nil {
@@ -652,9 +667,29 @@ func (m *MovieRepository) insertMovie(ctx context.Context, tx pgx.Tx, body model
 	var insertedMovieID int
 
 	query := `
-		insert into movies (title, synopsis, poster_img, backdrop_img, duration_minutes, release_date, director_id, age_rating_id) values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`
+		insert into
+			movies (
+				poster_img,
+				backdrop_img,
+				title,
+				age_rating_id,
+				release_date,
+				duration_minutes,
+				director_id,
+				synopsis
+			)
+		values
+			($1, $2, $3, $4, $5, $6, $7, $8) returning id`
 
-	err := tx.QueryRow(ctx, query, body.Title, body.Synopsis, locationPoster, locationBackdrop, body.DurationMinutes, body.ReleaseDate, directorID, body.AgeRating).Scan(&insertedMovieID)
+	err := tx.QueryRow(ctx, query,
+		locationPoster,
+		locationBackdrop,
+		body.Title,
+		body.AgeRating,
+		body.ReleaseDate,
+		body.DurationMinutes,
+		directorID,
+		body.Synopsis).Scan(&insertedMovieID)
 	if err != nil {
 		log.Printf("insertMovie failed: %v", err)
 		return 0, err
@@ -699,5 +734,93 @@ func (m *MovieRepository) insertMovieActors(ctx context.Context, tx pgx.Tx, movi
 		return fmt.Errorf("failed to insert movie_actors: %w", err)
 	}
 
+	return nil
+}
+
+// createSchedules creates schedules for a movie for 1 week starting from showDate
+// for each combination of cinema, city, and show time
+func (m *MovieRepository) createSchedules(ctx context.Context, tx pgx.Tx, movieID int, showDate string, cinemaIDs []string, showTimeIDs []string, cityIDs []string) error {
+	if len(cinemaIDs) == 0 || len(showTimeIDs) == 0 || len(cityIDs) == 0 {
+		log.Println("No cinemas, show times, or cities provided, skipping schedule creation")
+		return nil
+	}
+
+	// Parse the show date
+	startDate, err := time.Parse("2006-01-02", showDate)
+	if err != nil {
+		return fmt.Errorf("invalid show date format: %w", err)
+	}
+
+	// Convert cinema IDs from strings to integers
+	var cinemaIntIDs []int
+	for _, cidStr := range cinemaIDs {
+		if cid, err := strconv.Atoi(cidStr); err == nil {
+			cinemaIntIDs = append(cinemaIntIDs, cid)
+		} else {
+			log.Printf("Invalid cinema ID: %s, skipping", cidStr)
+		}
+	}
+
+	// Convert show time IDs from strings to integers
+	var showTimeIntIDs []int
+	for _, stidStr := range showTimeIDs {
+		if stid, err := strconv.Atoi(stidStr); err == nil {
+			showTimeIntIDs = append(showTimeIntIDs, stid)
+		} else {
+			log.Printf("Invalid show time ID: %s, skipping", stidStr)
+		}
+	}
+
+	// Convert city IDs from strings to integers
+	var cityIntIDs []int
+	for _, cityStr := range cityIDs {
+		if cid, err := strconv.Atoi(cityStr); err == nil {
+			cityIntIDs = append(cityIntIDs, cid)
+		} else {
+			log.Printf("Invalid city ID: %s, skipping", cityStr)
+		}
+	}
+
+	if len(cinemaIntIDs) == 0 || len(showTimeIntIDs) == 0 || len(cityIntIDs) == 0 {
+		return fmt.Errorf("no valid cinema IDs, show time IDs, or city IDs after parsing")
+	}
+
+	// Create schedules for 7 days (1 week)
+	schedulesCreated := 0
+	for day := 0; day < 7; day++ {
+		currentDate := startDate.AddDate(0, 0, day)
+
+		// For each city
+		for _, cityID := range cityIntIDs {
+			// For each cinema
+			for _, cinemaID := range cinemaIntIDs {
+				// For each show time
+				for _, showTimeID := range showTimeIntIDs {
+					scheduleQuery := `
+						INSERT INTO schedules (movie_id, city_id, show_time_id, cinema_id, show_date)
+						VALUES ($1, $2, $3, $4, $5)
+					`
+
+					_, err := tx.Exec(ctx, scheduleQuery,
+						movieID,
+						cityID,
+						showTimeID,
+						cinemaID,
+						currentDate.Format("2006-01-02"))
+
+					if err != nil {
+						return fmt.Errorf("failed to insert schedule for movie %d, city %d, cinema %d, showtime %d, date %s: %w",
+							movieID, cityID, cinemaID, showTimeID, currentDate.Format("2006-01-02"), err)
+					}
+
+					schedulesCreated++
+					log.Printf("Created schedule: movie=%d, city=%d, cinema=%d, showtime=%d, date=%s",
+						movieID, cityID, cinemaID, showTimeID, currentDate.Format("2006-01-02"))
+				}
+			}
+		}
+	}
+
+	log.Printf("Successfully created %d schedules for movie %d", schedulesCreated, movieID)
 	return nil
 }
