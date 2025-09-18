@@ -428,6 +428,8 @@ func (m *MovieRepository) ListAllMovies(ctx context.Context, offset int) ([]mode
 		movies m
 		JOIN movie_genres mg ON m.id = mg.movie_id
 		JOIN genres g ON mg.genre_id = g.id
+	WHERE
+		m.archived_at IS NULL
 	GROUP BY
 		m.id,
 		m.title,
