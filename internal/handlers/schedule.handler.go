@@ -17,6 +17,20 @@ func NewScheduleHandler(sr *repositories.ScheduleRepository) *ScheduleHandler {
 	return &ScheduleHandler{sr: sr}
 }
 
+func (s *ScheduleHandler) ListCinemas(ctx *gin.Context) {
+	cinemas, err := s.sr.ListCinemas(ctx)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "status internal error", err.Error())
+		return
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    cinemas,
+	})
+}
+
 func (s *ScheduleHandler) ListSchedules(ctx *gin.Context) {
 	var queryParams models.ScheduleFilter
 	if err := ctx.ShouldBindQuery(&queryParams); err != nil {

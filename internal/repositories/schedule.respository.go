@@ -15,10 +15,35 @@ func NewScheduleRepository(db *pgxpool.Pool) *ScheduleRepository {
 	return &ScheduleRepository{db: db}
 }
 
+func (s *ScheduleRepository) ListCinemas(ctx context.Context) ([]models.Cinema, error) {
+	query := `
+	SELECT id, name, img, ticket_price
+	FROM cinemas
+	`
+
+	rows, err := s.db.Query(ctx, query)
+	if err != nil {
+		return []models.Cinema{}, err
+	}
+	defer rows.Close()
+
+	var cinemas []models.Cinema
+	// Read rows/records
+	for rows.Next() {
+		var cinema models.Cinema
+		if err := rows.Scan(&cinema.ID, &cinema.Name, &cinema.IMG, &cinema.TicketPrice); err != nil {
+			return []models.Cinema{}, err
+		}
+		cinemas = append(cinemas, cinema)
+	}
+
+	return cinemas, nil
+}
+
 func (s *ScheduleRepository) FilterSchedule(ctx context.Context, queryParam models.ScheduleFilter) ([]models.Schedule, error) {
 	query := `
 			SELECT 
-				s.id,
+				s.id as schedule_id,
 				s.movie_id,
 				m.title,
 				s.city_id,
@@ -34,14 +59,12 @@ func (s *ScheduleRepository) FilterSchedule(ctx context.Context, queryParam mode
 			JOIN cities ci ON s.city_id = ci.id
 			JOIN show_times st ON s.show_time_id = st.id
 			JOIN cinemas c ON s.cinema_id = c.id
-			WHERE s.show_date = COALESCE(NULLIF($4, '')::date, CURRENT_DATE + 1)
-				AND (NULLIF($1, '')::int IS NULL OR s.movie_id = NULLIF($1, '')::int)
-				AND (NULLIF($2, '')::int IS NULL OR s.city_id = NULLIF($2, '')::int)
-				AND (NULLIF($3, '')::int IS NULL OR s.show_time_id = NULLIF($3, '')::int)
+			WHERE 
+				s.movie_id = $1
 			ORDER BY s.show_time_id, s.cinema_id;
 	`
 
-	rows, err := s.db.Query(ctx, query, queryParam.MovieID, queryParam.CityID, queryParam.ShowTimeID, queryParam.Date)
+	rows, err := s.db.Query(ctx, query, queryParam.MovieID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +74,9 @@ func (s *ScheduleRepository) FilterSchedule(ctx context.Context, queryParam mode
 	for rows.Next() {
 		var s models.Schedule
 		if err := rows.Scan(
-			&s.ID, &s.MovieID, &s.Title,
+			&s.ID,
+			&s.MovieID,
+			&s.Title,
 			&s.CityID, &s.CityName,
 			&s.ShowTimeID, &s.StartAt,
 			&s.CinemaID, &s.CinemaName, &s.CinemaImg,

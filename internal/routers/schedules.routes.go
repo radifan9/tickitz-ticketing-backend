@@ -13,5 +13,7 @@ func RegisterSchedulesRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool) {
 	schedules := v1.Group("/schedules")
 
 	schedules.GET("", scheduleHandler.ListSchedules)
+	schedules.GET("/cinemas", scheduleHandler.ListCinemas)
 	schedules.GET("/:id/sold-seats", scheduleHandler.GetSoldSeatsByScheduleID)
+
 }
