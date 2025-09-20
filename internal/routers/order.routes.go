@@ -17,7 +17,7 @@ func RegisterOrderRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Clien
 	orders := v1.Group("/orders")
 	orders.Use(VerifyTokenWithBlacklist, middlewares.Access("user"))
 
-	orders.POST("/", orderHandler.AddTransaction)
+	orders.POST("", orderHandler.AddTransaction)
 	orders.PATCH("/transactions/:id", orderHandler.PayTransaction)
 	orders.GET("/histories", orderHandler.ListTransaction)
 }
