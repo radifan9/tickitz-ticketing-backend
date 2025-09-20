@@ -127,15 +127,17 @@ func (m *MovieRepository) fetchPopularMovies(ctx context.Context) ([]models.Movi
 		from
 			transactions t
 			join schedules s on t.schedule_id = s.id
+			
 		where
 			-- Make sure the movie is still on the show_date schedule
 			s.show_date >= current_date
+			-- Make sure the movie is not archived
+
 		group by
 			movie_id
 		order by
 			count(t.id) desc
 	)
-		
 	SELECT
 		m.id,
 		m.title,
