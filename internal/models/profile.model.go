@@ -8,6 +8,7 @@ import (
 // UserProfile represents the user_profiles table
 type UserProfile struct {
 	UserID      string    `db:"user_id" json:"user_id,omitempty"`
+	Email       string    `db:"email" json:"email"`
 	FirstName   string    `db:"first_name" json:"first_name,omitempty" form:"first_name"`
 	LastName    string    `db:"last_name" json:"last_name,omitempty"`
 	Img         string    `db:"img" json:"img,omitempty"`

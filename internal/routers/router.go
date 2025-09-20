@@ -31,7 +31,7 @@ func InitRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 		RegisterUserRoutes(v1, db, rdb)
 		RegisterMovieRoutes(v1, db, rdb)
 		RegisterOrderRoutes(v1, db, rdb)
-		RegisterSchedulesRoutes(v1, db)
+		RegisterSchedulesRoutes(v1, db, rdb)
 		RegisterAdminRoutes(v1, db, rdb)
 
 		// Static File Image
