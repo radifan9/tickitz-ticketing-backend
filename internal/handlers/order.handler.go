@@ -38,7 +38,7 @@ func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
 		return
 	}
 
-	var body models.Transaction
+	var body models.AddTransaction
 	if err := ctx.ShouldBind(&body); err != nil {
 		log.Println("error : ", err.Error())
 		utils.HandleResponse(ctx, http.StatusInternalServerError, models.ErrorResponse{
@@ -67,7 +67,31 @@ func (o *OrderHandler) AddTransaction(ctx *gin.Context) {
 	})
 }
 
-// --- Method used in profile "Order History"
+func (o *OrderHandler) PayTransaction(ctx *gin.Context) {
+	// Get userID from token
+	claims, _ := ctx.Get("claims")
+	_, ok := claims.(pkg.Claims)
+	if !ok {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", "cannot cast into pkg.claims")
+		return
+	}
+
+	// Get the transaction ID that we want to be paid
+	id := ctx.Param("id")
+	id, err := o.or.PayTransaction(ctx, id)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "internal server error", err.Error())
+		return
+	}
+
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    id,
+	})
+}
+
+// Method used in profile "Order History"
 
 // ListTransaction godoc
 // @Summary Get user transaction histories

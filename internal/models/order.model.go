@@ -23,6 +23,19 @@ type ScheduleFilter struct {
 	Date       string `form:"show_date"`
 }
 
+type AddTransaction struct {
+	ID           string     `json:"id,omitempty"`
+	UserID       string     `json:"user_id,omitempty"`
+	PaymentID    int        `json:"payment_id,omitempty"`
+	TotalPayment int        `json:"total_payment"`
+	FullName     string     `json:"full_name"`
+	Email        string     `json:"email"`
+	PhoneNumber  string     `json:"phone_number"`
+	CreatedAt    *time.Time `json:"created_at,omitempty"`
+	ScheduleID   int        `json:"schedule_id"`
+	Seats        []string   `json:"seats"`
+}
+
 type Transaction struct {
 	ID           string     `json:"id,omitempty"`
 	UserID       string     `json:"user_id,omitempty"`

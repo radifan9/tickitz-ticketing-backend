@@ -19,9 +19,9 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 	return &OrderRepository{db: db}
 }
 
-// --- Method used in Payment Page, when user clicked "Check Payment"
-func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t models.Transaction, userID string) (models.Transaction, error) {
-	// --- --- Begin transaction
+// Method used in Payment Page, when user clicked "Check Payment"
+func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t models.AddTransaction, userID string) (models.Transaction, error) {
+	// Begin transaction
 	tx, err := o.db.Begin(ctx)
 	if err != nil {
 		return models.Transaction{}, err
@@ -34,7 +34,7 @@ func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t 
 		}
 	}()
 
-	// --- --- Step 1: Insert seat codes and get their IDS
+	// Step 1: Insert seat codes and get their IDS
 	var insertedSeatIDs []int
 	if len(t.Seats) > 0 {
 		insertedSeatIDs, err = o.insertSeatCodes(ctx, tx, t.Seats)
@@ -43,13 +43,13 @@ func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t 
 		}
 	}
 
-	// --- --- Step 2: Insert new transaction
+	// Step 2: Insert new transaction
 	newT, err := o.insertTransaction(ctx, tx, t, userID)
 	if err != nil {
 		return models.Transaction{}, err
 	}
 
-	// --- --- Step 3: Link seats to transaction
+	// Step 3: Link seats to transaction
 	if len(insertedSeatIDs) > 0 {
 		err = o.linkSeatsToTransaction(ctx, tx, newT.ID, insertedSeatIDs)
 		if err != nil {
@@ -57,7 +57,7 @@ func (o *OrderRepository) AddNewTransactionsAndSeatCodes(ctx context.Context, t 
 		}
 	}
 
-	// ---- --- Commit the transaction
+	// Commit the transaction
 	if err = tx.Commit(ctx); err != nil {
 		return models.Transaction{}, err
 	}
@@ -115,7 +115,7 @@ func (o *OrderRepository) insertSeatCodes(ctx context.Context, tx pgx.Tx, seats 
 }
 
 // Helper method to insert transaction
-func (o *OrderRepository) insertTransaction(ctx context.Context, tx pgx.Tx, t models.Transaction, userID string) (models.Transaction, error) {
+func (o *OrderRepository) insertTransaction(ctx context.Context, tx pgx.Tx, t models.AddTransaction, userID string) (models.Transaction, error) {
 	query := `
 		INSERT INTO transactions (
 			user_id,
@@ -124,9 +124,8 @@ func (o *OrderRepository) insertTransaction(ctx context.Context, tx pgx.Tx, t mo
 			full_name,
 			email,
 			phone_number,
-			paid_at,
 			schedule_id
-		) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, $7) 
+		) VALUES ($1, $2, $3, $4, $5, $6, $7) 
 		RETURNING id::text, user_id::text, schedule_id`
 
 	var newT models.Transaction
@@ -173,7 +172,25 @@ func (o *OrderRepository) linkSeatsToTransaction(ctx context.Context, tx pgx.Tx,
 	return err
 }
 
-// --- Transaction History
+// Patch transaction into paid by adding paid_at
+func (o *OrderRepository) PayTransaction(ctx context.Context, transactionID string) (string, error) {
+	query := `
+		UPDATE transactions
+		SET 
+			paid_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND paid_at IS NULL
+		returning id
+	`
+	var id string
+	if err := o.db.QueryRow(ctx, query, transactionID).Scan(&id); err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+
+// Transaction History
 func (o *OrderRepository) ListTransaction(ctx context.Context, userID string) ([]models.TransactionHistory, error) {
 	query := `
 		select 
