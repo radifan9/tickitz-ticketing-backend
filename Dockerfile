@@ -24,7 +24,7 @@ COPY --from=builder /build/server ./server
 COPY --from=builder /build/Makefile ./Makefile
 
 # Copy migrations & seeds
-COPY --from=builder /build/migrations ./migrations
+COPY --from=builder /build/db/migrations ./db/migrations
 COPY --from=builder /build/db/seeds ./db/seeds
 
 RUN chmod +x server
