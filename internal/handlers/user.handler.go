@@ -286,7 +286,7 @@ func (u *UserHandler) EditProfile(ctx *gin.Context) {
 		}
 
 		filename := fmt.Sprintf("%d_images_%s%s", time.Now().UnixNano(), user.UserId, ext)
-		location := filepath.Join("public", filename)
+		location := filepath.Join("public/profile_pics", filename)
 
 		if err := ctx.SaveUploadedFile(file, location); err != nil {
 			utils.HandleError(ctx, http.StatusBadRequest, err.Error(), "failed to upload")
@@ -294,7 +294,7 @@ func (u *UserHandler) EditProfile(ctx *gin.Context) {
 		}
 
 		// Update profile with new image
-		editedProfile, err := u.ur.EditProfile(ctx.Request.Context(), user.UserId, body, location)
+		editedProfile, err := u.ur.EditProfile(ctx.Request.Context(), user.UserId, body, filename)
 		if err != nil {
 			utils.HandleError(ctx, http.StatusInternalServerError, err.Error(), "cannot edit user profile")
 			return
