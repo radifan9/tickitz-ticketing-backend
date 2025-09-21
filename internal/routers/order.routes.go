@@ -10,7 +10,7 @@ import (
 )
 
 func RegisterOrderRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Client) {
-	orderRepo := repositories.NewOrderRepository(db)
+	orderRepo := repositories.NewOrderRepository(db, rdb)
 	orderHandler := handlers.NewOrderHandler(orderRepo)
 	VerifyTokenWithBlacklist := middlewares.VerifyTokenWithBlacklist(rdb)
 

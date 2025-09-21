@@ -526,6 +526,7 @@ func (m *MovieRepository) CreateMovie(ctx context.Context, movie models.CreateMo
 	// Step 3: Create a new movie
 	var newMovieID int
 	newMovieID, err = m.insertMovie(ctx, tx, movie, insertedDirectorID, locationPoster, locationBackdrop)
+
 	log.Println("new movie ID : ", newMovieID)
 
 	// Step 4: Insert Movie_Genres

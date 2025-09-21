@@ -9,14 +9,22 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/radifan9/tickitz-ticketing-backend/internal/models"
+	"github.com/radifan9/tickitz-ticketing-backend/internal/utils"
+	"github.com/redis/go-redis/v9"
 )
 
 type OrderRepository struct {
-	db *pgxpool.Pool
+	db    *pgxpool.Pool
+	rdb   *redis.Client
+	cache *utils.CacheManager
 }
 
-func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
-	return &OrderRepository{db: db}
+func NewOrderRepository(db *pgxpool.Pool, rdb *redis.Client) *OrderRepository {
+	return &OrderRepository{
+		db:    db,
+		rdb:   rdb,
+		cache: utils.NewCacheManager(rdb),
+	}
 }
 
 // Method used in Payment Page, when user clicked "Check Payment"
@@ -187,6 +195,15 @@ func (o *OrderRepository) PayTransaction(ctx context.Context, transactionID stri
 		return "", err
 	}
 
+	keysToInvalidate := []string{
+		"tickitz:popular",
+	}
+	for _, k := range keysToInvalidate {
+		if delErr := o.rdb.Del(ctx, k).Err(); delErr != nil {
+			log.Printf("failed to invalidate cache for key %s: %v", k, delErr)
+		}
+	}
+
 	return id, nil
 }
 
@@ -195,10 +212,19 @@ func (o *OrderRepository) ListTransaction(ctx context.Context, userID string) ([
 	query := `
 		select 
 			t.id,
-			c.name as cinema, c.img as cinema_img, s.show_date, m.title,
-			ar.age_rating, st.start_at, array_agg(seat_code) as seats ,
-			t.total_payment, t.phone_number, 
-			t.paid_at, t.scanned_at, t.schedule_id
+			c.name as cinema, 
+			c.img as cinema_img, 
+			s.show_date, 
+			m.title,
+			ar.age_rating, 
+			st.start_at, 
+			array_agg(seat_code) as seats ,
+			t.total_payment, 
+			t.phone_number, 
+			t.paid_at, 
+			t.updated_at,
+			t.scanned_at, 
+			t.schedule_id
 		from transactions t
 			join schedules s on t.schedule_id = s.id
 			join movies m on s.movie_id = m.id
@@ -212,6 +238,7 @@ func (o *OrderRepository) ListTransaction(ctx context.Context, userID string) ([
 			ar.age_rating, st.start_at, 
 			t.total_payment, t.phone_number, 
 			t.paid_at, t.scanned_at, t.schedule_id
+		order by t.updated_at desc
 	`
 	rows, err := o.db.Query(ctx, query, userID)
 	if err != nil {
@@ -233,6 +260,7 @@ func (o *OrderRepository) ListTransaction(ctx context.Context, userID string) ([
 			&t.TotalPayment,
 			&t.PhoneNumber,
 			&t.PaidAt,
+			&t.UpdatedAt,
 			&t.ScannedAt,
 			&t.ScheduleID,
 		); err != nil {
