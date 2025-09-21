@@ -15,8 +15,17 @@ RUN go build -o server ./cmd/main.go
 FROM alpine:3.22
 
 WORKDIR /app
+RUN apk add --no-cache make
 
+# Copy the built binary
 COPY --from=builder /build/server ./server
+
+# Copy the Makefile
+COPY --from=builder /build/Makefile ./Makefile
+
+# Copy migrations & seeds
+COPY --from=builder /build/migrations ./migrations
+COPY --from=builder /build/db/seeds ./db/seeds
 
 RUN chmod +x server
 
