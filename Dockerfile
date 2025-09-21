@@ -27,6 +27,9 @@ COPY --from=builder /build/Makefile ./Makefile
 COPY --from=builder /build/db/migrations ./db/migrations
 COPY --from=builder /build/db/seeds ./db/seeds
 
+# Copy public assets
+COPY --from=builder /build/public ./public
+
 RUN chmod +x server
 
 EXPOSE 3000
