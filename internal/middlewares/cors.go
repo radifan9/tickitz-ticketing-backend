@@ -2,24 +2,24 @@ package middlewares
 
 import (
 	"net/http"
-	"slices"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CORSMiddleware(ctx *gin.Context) {
 	// Daftar origin yang diizinkan
-	whitelist := []string{
-		"http://127.0.0.1:5500",
-		"http://localhost:5173",
-		"http://localhost",
-	}
+	// whitelist := []string{
+	// 	"http://127.0.0.1:5500",
+	// 	"http://localhost:5173",
+	// 	"http://localhost",
+	// }
 
-	origin := ctx.GetHeader("Origin")
-	if slices.Contains(whitelist, origin) {
-		// ctx.Header("Access-Control-Allow-Origin", origin)
-		ctx.Header("Access-Control-Allow-Origin", "*")
-	}
+	// origin := ctx.GetHeader("Origin")
+	// if slices.Contains(whitelist, origin) {
+	// 	// ctx.Header("Access-Control-Allow-Origin", origin)
+	//
+	// }
+	ctx.Header("Access-Control-Allow-Origin", "*")
 
 	// Header CORS standar
 	ctx.Header("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
