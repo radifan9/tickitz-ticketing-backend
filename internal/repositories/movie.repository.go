@@ -159,6 +159,7 @@ func (m *MovieRepository) fetchPopularMovies(ctx context.Context) ([]models.Movi
 			from
 				get_popular_movie_id
 		)
+		AND m.archived_at IS NULL
 	GROUP BY
 		m.id,
 		m.title,
