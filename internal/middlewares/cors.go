@@ -17,7 +17,8 @@ func CORSMiddleware(ctx *gin.Context) {
 
 	origin := ctx.GetHeader("Origin")
 	if slices.Contains(whitelist, origin) {
-		ctx.Header("Access-Control-Allow-Origin", origin)
+		// ctx.Header("Access-Control-Allow-Origin", origin)
+		ctx.Header("Access-Control-Allow-Origin", "*")
 	}
 
 	// Header CORS standar
