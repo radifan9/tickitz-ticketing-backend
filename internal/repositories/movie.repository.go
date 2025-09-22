@@ -72,6 +72,7 @@ func (m *MovieRepository) fetchUpcomingMoviesFromDB(ctx context.Context) ([]mode
 			JOIN genres g ON mg.genre_id = g.id
 		WHERE
 			m.release_date > CURRENT_DATE
+			AND m.archived_at IS NULL
 		GROUP BY
 			m.id,
 			m.title,
