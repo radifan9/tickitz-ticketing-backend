@@ -95,26 +95,6 @@ GET    /api/v1/movies/upcoming  # Get upcoming movies
 GET    /api/v1/movies/popular   # Get popular movies
 ```
 
-### Admin Movie Management
-```http
-POST   /api/v1/admin/movies     # Create new movie (admin only)
-GET    /api/v1/admin/movies     # List all movies (admin only)
-DELETE /api/v1/admin/movies/:id/archive  # Archive movie (admin only)
-```
-
-### Schedules Endpoints
-```http
-GET    /api/v1/schedules        # Get movie schedules (requires auth)
-GET    /api/v1/schedules/cinemas # Get cinema list (requires auth)
-GET    /api/v1/schedules/:id/sold-seats # Get sold seats (requires auth)
-```
-
-### Orders/Transactions Endpoints
-```http
-POST   /api/v1/orders           # Create new transaction (user only)
-PATCH  /api/v1/orders/transactions/:id # Pay transaction (user only)
-GET    /api/v1/orders/histories # Get transaction history (user only)
-```
 
 ### Static Files
 ```http
