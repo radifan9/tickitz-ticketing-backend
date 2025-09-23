@@ -16,6 +16,7 @@ func CORSMiddleware(ctx *gin.Context) {
 		"http://localhost:80",
 		"http://frontend",    // Add Docker service name
 		"http://frontend:80", // Add Docker service with port
+		"http://192.168.100.232",
 	}
 
 	origin := ctx.GetHeader("Origin")
@@ -23,7 +24,6 @@ func CORSMiddleware(ctx *gin.Context) {
 		ctx.Header("Access-Control-Allow-Origin", origin)
 
 	}
-	// ctx.Header("Access-Control-Allow-Origin", "*")
 
 	// Header CORS standar
 	ctx.Header("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
