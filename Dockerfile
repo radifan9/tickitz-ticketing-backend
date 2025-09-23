@@ -20,16 +20,6 @@ RUN apk add --no-cache make
 # Copy the built binary
 COPY --from=builder /build/server ./server
 
-# Copy the Makefile
-# COPY --from=builder /build/Makefile ./Makefile
-
-# Copy migrations & seeds
-# COPY --from=builder /build/db/migrations ./db/migrations
-# COPY --from=builder /build/db/seeds ./db/seeds
-
-# Copy public assets
-# COPY --from=builder /build/public ./public
-
 RUN chmod +x server
 
 EXPOSE 3000
