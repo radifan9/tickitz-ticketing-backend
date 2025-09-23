@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/admin/movies": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/admin/movies": {
             "get": {
                 "security": [
                     {
@@ -75,7 +75,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/admin/movies/{id}/archive": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/admin/movies/{id}/archive": {
             "delete": {
                 "security": [
                     {
@@ -108,7 +108,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/login": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/login": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -144,7 +144,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/logout": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/logout": {
             "delete": {
                 "security": [
                     {
@@ -171,7 +171,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/register": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/register": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -204,7 +204,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/movies/": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/": {
             "get": {
                 "produces": [
                     "application/json"
@@ -243,7 +243,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/movies/popular": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/popular": {
             "get": {
                 "produces": [
                     "application/json"
@@ -262,7 +262,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/movies/upcoming": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/upcoming": {
             "get": {
                 "produces": [
                     "application/json"
@@ -281,7 +281,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/movies/{id}": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/{id}": {
             "get": {
                 "produces": [
                     "application/json"
@@ -309,7 +309,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/users/password": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/password": {
             "patch": {
                 "security": [
                     {
@@ -350,7 +350,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/users/profile": {
+        "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/profile": {
             "get": {
                 "security": [
                     {
@@ -571,7 +571,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "/api/v1",
+	BasePath:         "${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1",
 	Schemes:          []string{},
 	Title:            "Ticktiz Ticketing",
 	Description:      "RESTful API created using gin gonic",

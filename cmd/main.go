@@ -12,7 +12,7 @@ import (
 // @title           Ticktiz Ticketing
 // @version         1.0
 // @description     RESTful API created using gin gonic
-// @BasePath        /api/v1
+// @BasePath        ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1
 //
 // @securityDefinitions.apikey BearerAuth
 // @in header

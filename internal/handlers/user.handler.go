@@ -37,7 +37,7 @@ func NewUserHandler(ur *repositories.UserRepository, rdb *redis.Client) *UserHan
 // @Produce json
 // @Param   body body models.RegisterUser true "User registration"
 // @Success 201 {object} models.User
-// @Router  /api/v1/auth/register [post]
+// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/register [post]
 func (u *UserHandler) Register(ctx *gin.Context) {
 	var user models.RegisterUser
 	if err := ctx.ShouldBind(&user); err != nil {
@@ -82,7 +82,7 @@ func (u *UserHandler) Register(ctx *gin.Context) {
 // @Produce json
 // @Param   body body models.User true "Login credentials"
 // @Success 200 {object} map[string]string "JWT token"
-// @Router  /api/v1/auth/login [post]
+// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/login [post]
 func (u *UserHandler) Login(ctx *gin.Context) {
 	var user models.User
 	if err := ctx.ShouldBind(&user); err != nil {
@@ -166,7 +166,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} map[string]string "Logout successful"
-// @Router  /api/v1/auth/logout [delete]
+// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/logout [delete]
 func (u *UserHandler) Logout(ctx *gin.Context) {
 	// Extract the token from Authorization header
 	authHeader := ctx.GetHeader("Authorization")
@@ -224,7 +224,7 @@ func (u *UserHandler) Logout(ctx *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} models.UserProfile
-// @Router  /api/v1/users/profile [get]
+// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/profile [get]
 func (u *UserHandler) GetProfile(ctx *gin.Context) {
 	// Get the userID from token
 	claims, _ := ctx.Get("claims")
@@ -258,7 +258,7 @@ func (u *UserHandler) GetProfile(ctx *gin.Context) {
 // @Param   phone_number formData string false "Phone number"
 // @Param   img formData file false "Profile image"
 // @Success 200 {object} models.UserProfile
-// @Router  /api/v1/users/profile [patch]
+// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/profile [patch]
 func (u *UserHandler) EditProfile(ctx *gin.Context) {
 	// Get image from form-data
 	var body models.EditUserProfile
@@ -322,7 +322,7 @@ func (u *UserHandler) EditProfile(ctx *gin.Context) {
 // @Security BearerAuth
 // @Param   body body models.ChangePasswordRequest true "Password change"
 // @Success 200 {object} map[string]string "Password changed"
-// @Router  /api/v1/users/password [patch]
+// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/password [patch]
 func (u *UserHandler) ChangePassword(ctx *gin.Context) {
 	var req models.ChangePasswordRequest
 	if err := ctx.ShouldBind(&req); err != nil {
