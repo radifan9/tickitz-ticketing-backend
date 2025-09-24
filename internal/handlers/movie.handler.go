@@ -29,7 +29,7 @@ func NewMovieHandler(mr *repositories.MovieRepository) *MovieHandler {
 // @Tags    Movies
 // @Produce json
 // @Success 200 {object} models.SuccessResponse
-// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/upcoming [get]
+// @Router  /api/v1/movies/upcoming [get]
 func (m *MovieHandler) ListUpcomingMovies(ctx *gin.Context) {
 	upcomingMovies, err := m.mr.ListUpcomingMovies(ctx)
 	if err != nil {
@@ -48,7 +48,7 @@ func (m *MovieHandler) ListUpcomingMovies(ctx *gin.Context) {
 // @Tags    Movies
 // @Produce json
 // @Success 200 {object} models.SuccessResponse
-// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/popular [get]
+// @Router  /api/v1/movies/popular [get]
 func (m *MovieHandler) ListPopularMovies(ctx *gin.Context) {
 	popularMovies, err := m.mr.ListPopularMovies(ctx)
 	if err != nil {
@@ -70,7 +70,7 @@ func (m *MovieHandler) ListPopularMovies(ctx *gin.Context) {
 // @Param   genres   query string false "Comma-separated genre IDs"
 // @Param   page     query int    false "Page number"
 // @Success 200 {object} models.SuccessResponse
-// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/ [get]
+// @Router  /api/v1/movies/ [get]
 func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 	keywordParam := ctx.Query("keywords")
 	genreParam := ctx.Query("genres")
@@ -133,7 +133,7 @@ func (m *MovieHandler) ListFilteredMovies(ctx *gin.Context) {
 // @Produce json
 // @Param   id path string true "Movie ID"
 // @Success 200 {object} models.SuccessResponse
-// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/{id} [get]
+// @Router  /api/v1/movies/{id} [get]
 func (m *MovieHandler) GetMovieDetails(ctx *gin.Context) {
 	movieID := ctx.Param("id")
 
@@ -160,7 +160,7 @@ func (m *MovieHandler) GetMovieDetails(ctx *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} models.SuccessResponse
-// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/admin/movies [get]
+// @Router  /api/v1/admin/movies [get]
 func (m *MovieHandler) ListAllMovies(ctx *gin.Context) {
 	pageParam := ctx.Query("page")
 
@@ -200,7 +200,7 @@ func (m *MovieHandler) ListAllMovies(ctx *gin.Context) {
 // @Security BearerAuth
 // @Param   id path string true "Movie ID"
 // @Success 200 {object} models.SuccessResponse
-// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/admin/movies/{id}/archive [delete]
+// @Router  /api/v1/admin/movies/{id}/archive [delete]
 func (m *MovieHandler) ArchiveMovieByID(ctx *gin.Context) {
 	movieId := ctx.Param("id")
 
@@ -226,7 +226,7 @@ func (m *MovieHandler) ArchiveMovieByID(ctx *gin.Context) {
 // @Security BearerAuth
 // @Param   body body models.CreateMovie true "Movie data"
 // @Success 200 {object} models.SuccessResponse
-// @Router  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/admin/movies [post]
+// @Router  /api/v1/admin/movies [post]
 func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 	var body models.CreateMovie
 	if err := ctx.ShouldBind(&body); err != nil {

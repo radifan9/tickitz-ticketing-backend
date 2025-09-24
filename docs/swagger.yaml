@@ -1,4 +1,4 @@
-basePath: ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1
+basePath: /api/v1
 definitions:
   models.ChangePasswordRequest:
     properties:
@@ -69,7 +69,7 @@ info:
   title: Ticktiz Ticketing
   version: "1.0"
 paths:
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/admin/movies:
+  /api/v1/admin/movies:
     get:
       produces:
       - application/json
@@ -105,7 +105,7 @@ paths:
       summary: Create a new movie (admin)
       tags:
       - Admin
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/admin/movies/{id}/archive:
+  /api/v1/admin/movies/{id}/archive:
     delete:
       parameters:
       - description: Movie ID
@@ -125,7 +125,7 @@ paths:
       summary: Archive movie by ID (admin)
       tags:
       - Admin
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/login:
+  /api/v1/auth/login:
     post:
       consumes:
       - application/json
@@ -148,7 +148,7 @@ paths:
       summary: User login
       tags:
       - Auth
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/logout:
+  /api/v1/auth/logout:
     delete:
       produces:
       - application/json
@@ -164,7 +164,7 @@ paths:
       summary: User logout
       tags:
       - Auth
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/register:
+  /api/v1/auth/register:
     post:
       consumes:
       - application/json
@@ -185,7 +185,7 @@ paths:
       summary: Register a new user
       tags:
       - Auth
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/:
+  /api/v1/movies/:
     get:
       parameters:
       - description: Comma-separated keywords
@@ -210,7 +210,7 @@ paths:
       summary: Get filtered movies
       tags:
       - Movies
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/{id}:
+  /api/v1/movies/{id}:
     get:
       parameters:
       - description: Movie ID
@@ -228,7 +228,7 @@ paths:
       summary: Get movie details
       tags:
       - Movies
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/popular:
+  /api/v1/movies/popular:
     get:
       produces:
       - application/json
@@ -240,7 +240,7 @@ paths:
       summary: Get popular movies
       tags:
       - Movies
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/upcoming:
+  /api/v1/movies/upcoming:
     get:
       produces:
       - application/json
@@ -252,7 +252,7 @@ paths:
       summary: Get upcoming movies
       tags:
       - Movies
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/password:
+  /api/v1/users/password:
     patch:
       consumes:
       - application/json
@@ -277,7 +277,7 @@ paths:
       summary: Change user password
       tags:
       - Users
-  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/profile:
+  /api/v1/users/profile:
     get:
       produces:
       - application/json

@@ -26,7 +26,7 @@ func InitRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	// API Version 1
-	v1 := router.Group("${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1")
+	v1 := router.Group("/api/v1")
 	{
 		RegisterUserRoutes(v1, db, rdb)
 		RegisterMovieRoutes(v1, db, rdb)

@@ -75,30 +75,30 @@ REDIS_PASSWORD=your_redis_password_example
 
 ### Authentication Endpoints
 ```http
-POST   ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/register    # User registration
-POST   ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/login       # User login
-DELETE ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/logout      # User logout (requires auth)
+POST   /api/v1/auth/register    # User registration
+POST   /api/v1/auth/login       # User login
+DELETE /api/v1/auth/logout      # User logout (requires auth)
 ```
 
 ### User Profile Endpoints
 ```http
-GET    ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/profile    # Get user profile (requires auth)
-PATCH  ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/profile    # Update user profile (requires auth)
+GET    /api/v1/users/profile    # Get user profile (requires auth)
+PATCH  /api/v1/users/profile    # Update user profile (requires auth)
 PATCH  /api/v1/users/password   # Change password (requires auth)
 ```
 
 ### Movies Endpoints
 ```http
-GET    ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/          # Get filtered movies
-GET    ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/:id       # Get movie details
-GET    ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/upcoming  # Get upcoming movies
-GET    ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/movies/popular   # Get popular movies
+GET    /api/v1/movies/          # Get filtered movies
+GET    /api/v1/movies/:id       # Get movie details
+GET    /api/v1/movies/upcoming  # Get upcoming movies
+GET    /api/v1/movies/popular   # Get popular movies
 ```
 
 
 ### Static Files
 ```http
-GET    ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/img/*            # Serve static images
+GET    /api/v1/img/*            # Serve static images
 ```
 
 **Response Format:**
@@ -135,7 +135,7 @@ GET    ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/img/*          
 - [Tickitz Frontend](https://github.com/radifan9/tickitz-ticketing-react) - React client application
 
 **API Base URL:** 
-- Development: `http://localhost:8080${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1`
+- Development: `http://localhost:8080/api/v1`
 - **Swagger Documentation**: `http://localhost:8080/swagger/index.html`
 
 **Project Structure:**

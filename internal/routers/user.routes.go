@@ -17,8 +17,8 @@ func RegisterUserRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Client
 	// Authentication routes (no auth required)
 	auth := v1.Group("/auth")
 	{
-		auth.POST("/register", userHandler.Register) // POST ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/register
-		auth.POST("/login", userHandler.Login)       // POST ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/auth/login
+		auth.POST("/register", userHandler.Register) // POST /api/v1/auth/register
+		auth.POST("/login", userHandler.Login)       // POST /api/v1/auth/login
 		auth.DELETE("/logout", verifyTokenWithBlacklist, userHandler.Logout)
 	}
 
@@ -26,8 +26,8 @@ func RegisterUserRoutes(v1 *gin.RouterGroup, db *pgxpool.Pool, rdb *redis.Client
 	users := v1.Group("/users")
 	users.Use(verifyTokenWithBlacklist, middlewares.Access("admin", "user"))
 	{
-		users.GET("/profile", userHandler.GetProfile)        // GET ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/profile
-		users.PATCH("/profile", userHandler.EditProfile)     // PATCH ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/profile
-		users.PATCH("/password", userHandler.ChangePassword) // PATCH ${import.meta.env.VITE_BE_HOST}/api/v1/img/profile_picsv1/users/password
+		users.GET("/profile", userHandler.GetProfile)        // GET /api/v1/users/profile
+		users.PATCH("/profile", userHandler.EditProfile)     // PATCH /api/v1/users/profile
+		users.PATCH("/password", userHandler.ChangePassword) // PATCH /api/v1/users/password
 	}
 }
