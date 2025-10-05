@@ -13,6 +13,7 @@ type Movie struct {
 	BackdropImg     string     `db:"backdrop_img" json:"backdrop_img,omitempty"`
 	DurationMinutes *int       `db:"duration_minutes" json:"duration_minutes,omitempty"`
 	ReleaseDate     *time.Time `db:"release_date" json:"release_date,omitempty"`
+	AgeRatingID     int        `json:"age_rating_id,omitempty"`
 	Genres          []string   `db:"genres" json:"genres"`
 	Director        string     `db:"director" json:"director,omitempty"`
 	Cast            []string   `db:"cast" json:"cast,omitempty"`

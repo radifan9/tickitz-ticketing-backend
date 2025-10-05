@@ -292,3 +292,76 @@ func (m *MovieHandler) CreateMovie(ctx *gin.Context) {
 		Data:    newM,
 	})
 }
+
+func (m *MovieHandler) EditMovie(ctx *gin.Context) {
+	// Parse movie ID
+	idParam := ctx.Param("id")
+	movieID, err := strconv.Atoi(idParam)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusBadRequest, "invalid id", "movie id must be integer")
+		return
+	}
+
+	// Parse form
+	var body models.CreateMovie
+	if err := ctx.ShouldBind(&body); err != nil {
+		utils.HandleError(ctx, http.StatusBadRequest, "bad request", err.Error())
+		return
+	}
+
+	// Handle poster upload (optional)
+	filePoster := body.PosterImg
+	filenamePoster := ""
+	var locationPoster string
+	if filePoster != nil {
+		ext := filepath.Ext(filePoster.Filename)
+		re := regexp.MustCompile(`(?i)\.(png|jpg|jpeg|webp)$`)
+		if !re.MatchString(ext) {
+			utils.HandleError(ctx, http.StatusBadRequest, "invalid file type", "only png, jpg, jpeg, webp allowed")
+			return
+		}
+
+		filenamePoster = fmt.Sprintf("%d_images_%s", time.Now().UnixNano(), ext)
+		locationPoster = filepath.Join("public/posters", filenamePoster)
+
+		if err := ctx.SaveUploadedFile(filePoster, locationPoster); err != nil {
+			utils.HandleError(ctx, http.StatusInternalServerError, "upload failed", err.Error())
+			return
+		}
+	}
+
+	// Handle backdrop upload (optional)
+	fileBackdrop := body.BackdropImg
+	filenameBackdrop := ""
+	var locationBackdrop string
+	if fileBackdrop != nil {
+		ext := filepath.Ext(fileBackdrop.Filename)
+		re := regexp.MustCompile(`(?i)\.(png|jpg|jpeg|webp)$`)
+		if !re.MatchString(ext) {
+			utils.HandleError(ctx, http.StatusBadRequest, "invalid file type", "only png, jpg, jpeg, webp allowed")
+			return
+		}
+
+		filenameBackdrop = fmt.Sprintf("%d_images_%s", time.Now().UnixNano(), ext)
+		locationBackdrop = filepath.Join("public/backdrops", filenameBackdrop)
+
+		if err := ctx.SaveUploadedFile(fileBackdrop, locationBackdrop); err != nil {
+			utils.HandleError(ctx, http.StatusInternalServerError, "upload failed", err.Error())
+			return
+		}
+	}
+
+	// Call repository
+	updatedMovie, err := m.mr.EditMovie(ctx, movieID, body, filenamePoster, filenameBackdrop)
+	if err != nil {
+		utils.HandleError(ctx, http.StatusInternalServerError, "failed to update movie", err.Error())
+		return
+	}
+
+	// Response
+	utils.HandleResponse(ctx, http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Status:  http.StatusOK,
+		Data:    updatedMovie,
+	})
+}

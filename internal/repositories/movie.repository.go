@@ -330,6 +330,7 @@ func (m *MovieRepository) GetMovieDetails(ctx context.Context, movieId string) (
 		m.backdrop_img,
 		m.duration_minutes,
 		m.release_date,
+		m.age_rating_id,
 		array_agg(
 			distinct g.name
 			order by
@@ -372,6 +373,7 @@ func (m *MovieRepository) GetMovieDetails(ctx context.Context, movieId string) (
 		&movieDetails.BackdropImg,
 		&movieDetails.DurationMinutes,
 		&movieDetails.ReleaseDate,
+		&movieDetails.AgeRatingID,
 		&movieDetails.Genres,
 		&movieDetails.Director,
 		&movieDetails.Cast,
@@ -828,4 +830,139 @@ func (m *MovieRepository) createSchedules(ctx context.Context, tx pgx.Tx, movieI
 
 	log.Printf("Successfully created %d schedules for movie %d", schedulesCreated, movieID)
 	return nil
+}
+
+// (admin) EditMovie updates a movie and recreates its schedules for 7 days
+func (m *MovieRepository) EditMovie(ctx context.Context, movieID int, movie models.CreateMovie, locationPoster string, locationBackdrop string) (models.CreateMovie, error) {
+	tx, err := m.db.Begin(ctx)
+	if err != nil {
+		return models.CreateMovie{}, err
+	}
+	defer func() {
+		if err != nil {
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				log.Println("failed to rollback transaction:", rollbackErr)
+			}
+		}
+	}()
+
+	// Step 1: Update movie info
+	updateQuery := `
+		UPDATE movies
+		SET
+			title = $1,
+			age_rating_id = $2,
+			release_date = $3,
+			duration_minutes = $4,
+			synopsis = $5,
+			poster_img = COALESCE(NULLIF($6, ''), poster_img),
+			backdrop_img = COALESCE(NULLIF($7, ''), backdrop_img),
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $8
+		RETURNING id;
+	`
+
+	var updatedMovieID int
+	err = tx.QueryRow(ctx, updateQuery,
+		movie.Title,
+		movie.AgeRating,
+		movie.ReleaseDate,
+		movie.DurationMinutes,
+		movie.Synopsis,
+		locationPoster,
+		locationBackdrop,
+		movieID,
+	).Scan(&updatedMovieID)
+	if err != nil {
+		log.Printf("update movie failed: %v", err)
+		return models.CreateMovie{}, err
+	}
+
+	// Step 2: Update director
+	if len(movie.Director) > 0 {
+		insertedDirectorID, err := m.insertDirector(ctx, tx, movie.Director)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+		_, err = tx.Exec(ctx, `UPDATE movies SET director_id = $1 WHERE id = $2`, insertedDirectorID, movieID)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+	}
+
+	// Step 3: Update genres
+	if len(movie.Genres) > 0 {
+		genreList := strings.Split(movie.Genres, ",")
+		insertedGenreIDs, err := m.insertGenres(ctx, tx, genreList)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+		_, err = tx.Exec(ctx, `DELETE FROM movie_genres WHERE movie_id = $1`, movieID)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+		err = m.insertMovieGenres(ctx, tx, movieID, insertedGenreIDs)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+	}
+
+	// Step 4: Update cast
+	if len(movie.Cast) > 0 {
+		castList := strings.Split(movie.Cast, ",")
+		insertedCastIDs, err := m.insertPeople(ctx, tx, castList)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+		_, err = tx.Exec(ctx, `DELETE FROM movie_actors WHERE movie_id = $1`, movieID)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+		err = m.insertMovieActors(ctx, tx, movieID, insertedCastIDs)
+		if err != nil {
+			return models.CreateMovie{}, err
+		}
+	}
+
+	// Step 5: Delete old schedules
+	_, err = tx.Exec(ctx, `DELETE FROM schedules WHERE movie_id = $1`, movieID)
+	if err != nil {
+		log.Printf("failed to delete old schedules: %v", err)
+		return models.CreateMovie{}, err
+	}
+
+	// Step 6: Create new schedules (7 days)
+	cinemaList := strings.Split(movie.CinemaID, ",")
+	showTimeList := strings.Split(movie.ShowTimeID, ",")
+	cityList := strings.Split(movie.CityID, ",")
+
+	err = m.createSchedules(ctx, tx, movieID, movie.ShowDate, cinemaList, showTimeList, cityList)
+	if err != nil {
+		log.Printf("error creating new schedules: %v", err)
+		return models.CreateMovie{}, err
+	}
+
+	// Step 7: Commit
+	if err = tx.Commit(ctx); err != nil {
+		return models.CreateMovie{}, err
+	}
+
+	// Step 8: Invalidate caches
+	keysToInvalidate := []string{
+		"tickitz:upcoming",
+		"tickitz:popular",
+		"tickitz:movies-all-first-page",
+	}
+	for _, k := range keysToInvalidate {
+		if delErr := m.rdb.Del(ctx, k).Err(); delErr != nil {
+			log.Printf("failed to invalidate cache for key %s: %v", k, delErr)
+		}
+	}
+
+	return models.CreateMovie{
+		ID:              movieID,
+		Title:           movie.Title,
+		ReleaseDate:     movie.ReleaseDate,
+		DurationMinutes: movie.DurationMinutes,
+	}, nil
 }
